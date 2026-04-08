@@ -1,13 +1,15 @@
 
 /*Configure the tab buttons*/
 .sheet-input,
-.sheet-display {
+.sheet-display,
+.sheet-abilities {
     display: none;
 }
 
 /* show the selected tab */
 .sheet-tabstoggle[value="input"] ~ div.sheet-input,
-.sheet-tabstoggle[value="display"] ~ div.sheet-display {
+.sheet-tabstoggle[value="display"] ~ div.sheet-display,
+.sheet-tabstoggle[value="abilities"] ~ div.sheet-abilities {
     display: block;
 }
 
