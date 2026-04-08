@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css?family=Bokor|Arsenal&display=swap');
 
 /*Configure the tab buttons*/
 .sheet-input,
@@ -120,20 +119,6 @@ section {
 
 
 /*------------- Section-specific CSS -------------*/
-
-
-.header {
-  grid-area: header;
-  align-items: center;
-  justify-content: center;
-  background-color: white;
-
-}
-
-.header h4 {
-  text-align: center;
-  color: black;
-}
 
 .attr {
   grid-area: attr;
