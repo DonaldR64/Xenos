@@ -1,0 +1,162 @@
+<input type="hidden" class="sheet-tabstoggle" name="attr_sheetTab"  value="display"  />
+<div>
+    <button type="action" name="act_input" >Input</button>
+    <button type="action" name="act_display" >Display</button>
+</div>
+
+<div class="sheet-input">
+    <div class="2colrow">
+        <div class="col">
+            <h3>Unit Information</h3>
+            <label>Name:</label><input type="text" name="attr_character_name">
+            <br>
+            <label for="attr_type">Type:</label>
+            <select name="attr_type">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="Elite Infantry">Elite Infantry</option>
+                <option value="Heavy Infantry">Heavy Infantry</option>
+                <option value="Light Infantry">Light Infantry</option>
+                <option value="Berserk Infantry">Berserk Infantry</option>
+                <option value="Support Infantry">Support Infantry</option>
+                <option value="Recon Infantry">Recon Infantry</option>
+                <option value="Primitive Infantry">Primitive Infantry</option>
+                <option value="Militia Rabble">Militia Rabble</option>
+                <option value="Greater Xenomorphs">Greater Xenomorphs</option>
+                <option value="Lesser Xenomorphs">Lesser Xenomorphs</option>
+                <option value="Fighting Vehicle">Fighting Vehicle</option>
+                <option value="Transport Vehicle">Transport Vehicle</option>
+                <option value="Soft-skin Vehicle">Soft-skin Vehicle</option>
+            </select>
+            <br>
+            <label for="attr_faction">Faction:</label>
+            <select name="attr_faction">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="Orks">Orks</option>
+                <option value="Blood Angels">Blood Angels</option>
+               
+            </select>
+            <br>
+            <label>Strength Points:</label><input type="text" name="attr_strength">
+            <br>
+            <label>Points:</label><input type="text" name="attr_points">
+        </div>
+        <div class="col">
+            <h3>Attributes</h3>
+            <label>Attack:</label><input type="text" name="attr_attackon">
+            <label>Move:</label><input type="text" name="attr_moveon">
+            <label>Shoot:</label><input type="text" name="attr_shooton">
+            <label>Courage:</label><input type="text" name="attr_courage">
+            <label>Armour:</label><input type="text" name="attr_armour">
+            <label>Attack Value:</label><input type="text" name="attr_attackval">
+            <label>Defence Value:</label><input type="text" name="attr_defenceval">
+            <label>Shoot Value:</label><input type="text" name="attr_shootval">
+            <label>Max Movement:</label><input type="number" name="attr_moverate">
+        </div>
+        <div class="col">
+        <label>Special Info:</label><input type="text" name="attr_special">
+
+
+
+
+    </div>    
+
+
+</div>
+
+
+
+<div class="sheet-display">
+    <input type="hidden" name="attr_nation"/>
+    <div class="mysheet">
+      <div class="bits">
+        <main>
+          <section class="common">
+                <div class="top-right">
+                    <h1><span name="attr_character_name"></span></h1>   
+                    <h3><span name="attr_nation"></span></h3>
+                    <h3> <span name="attr_type"></span></h3>
+                </div>
+              <img alt="Character Avatar" name="attr_character_avatar" style="width:600px;height:auto; bottom: 0;"/>
+          </section>
+
+          <section class="attr">
+            <h3>Actions</h3>
+            <div class="attrinfo">
+                <h4>Attack</h4>
+                <h4>Move</h4>
+                <h4>Shoot</h4>
+                <h4 style="color: darkred;"><span name="attr_attackon"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_moveon"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_shooton"></span></h4>
+            </div>
+          </section>
+
+          <section class="attr2">
+            <h3>Stats</h3>
+            <div class="attrinfo">
+                <h4>Courage</h4>
+                <h4>Armour</h4>
+                <h4>Movement</h4>
+                <h4 style="color: darkred;"><span name="attr_courage"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_armour"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_moverate"></span></h4>
+            </div>
+          </section>
+
+          <section class="attr3">
+            <h3>Combat</h3>
+            <div class="attrinfo">
+                <h4>Attack</h4>
+                <h4>Defence</h4>
+                <h4>Shoot</h4>
+                <h4 style="color: darkred;"><span name="attr_attackval"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_defenceval"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_shootval"></span></h4>
+            </div>
+          </section>
+
+          <section class="spec">
+            <h3>Special Rules/Options</h3>
+            <div class="specials">
+                <h3> <span name="attr_special"></span></h3>
+            </div>
+          </section>
+
+
+
+
+        </main>
+      </div>
+    </div>    
+</div>
+
+
+
+<script type="text/worker">
+    const buttonlist = ["input","display"];
+    buttonlist.forEach(button => {
+        on(`clicked:${button}`, function() {
+            setAttrs({
+                sheetTab: button
+            });
+        });
+    });
+
+    on("sheet:opened", function() {
+        getAttrs(["artflag","weapon1flag","weapon2flag"], function(values) {
+            let art = values.artflag || "Off";
+            let w1flag = values.weapon1flag || "On";
+            let w2flag = values.weapon2flag || "Off";
+
+
+            setAttrs({
+                sheetTab: "display",
+                artflag: art,
+                weapon1flag: w1flag,
+                weapon2flag: w2flag,
+            });
+        });
+    });
+
+
+</script>
