@@ -35,10 +35,6 @@
                 <option value="Blood Angels">Blood Angels</option>
                
             </select>
-            <br>
-            <label>Strength Points:</label><input type="text" name="attr_strength">
-            <br>
-            <label>Points:</label><input type="text" name="attr_points">
         </div>
         <div class="col">
             <h3>Attributes</h3>
@@ -50,11 +46,22 @@
             <label>Attack Value:</label><input type="text" name="attr_attackval">
             <label>Defence Value:</label><input type="text" name="attr_defenceval">
             <label>Shoot Value:</label><input type="text" name="attr_shootval">
-            <label>Max Movement:</label><input type="number" name="attr_moverate">
+            <label>Max Movement:</label><input type="text" name="attr_moverate">
         </div>
         <div class="col">
-            <label>Special Info:</label><input type="text" name="attr_special">
+            <label>Weapon 1:</label><input type="text" name="attr_weapon1name">
+            <label>Weapon 1 Range:</label><input type="text" name="attr_weapon1range">
+            <label>Weapon 1 Special:</label><input type="text" name="attr_weapon1special">
+            <label>Weapon 2:</label><input type="text" name="attr_weapon2name">
+            <label>Weapon 2 Range:</label><input type="text" name="attr_weapon2range">
+            <label>Weapon 2 Special:</label><input type="text" name="attr_weapon2special">
         </div>
+        <div class="col">
+            <label>Special Abilities:</label><input type="text" name="attr_special">
+        </div>
+
+
+
 
 
 
@@ -80,7 +87,7 @@
           </section>
 
           <section class="attr">
-            <h3>Actions</h3>
+            <h3>Activations</h3>
             <div class="attrinfo">
                 <h4>Attack</h4>
                 <h4>Move</h4>
@@ -115,8 +122,31 @@
             </div>
           </section>
 
+          <section class="weapons">
+            <h3>Weapons</h3>
+            <div class="weapons">
+                <h4>Name</h4>
+                <h4>Range</h4>
+                <h4>Special</h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1name"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1range"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1special"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2name"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2range"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2special"></span></h4>
+            </div>
+
+
+
+
+
+          </section>
+
+
+
+
           <section class="spec">
-            <h3>Special Rules/Options</h3>
+            <h3>Special Abilities</h3>
             <h3><span name="attr_special"></span></h3>
           </section>
 
