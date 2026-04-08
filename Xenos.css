@@ -46,7 +46,7 @@ main {
   grid-template-areas:"common common common"
                       "common common common"
                       "attr   attr2   attr3"
-                      "spec   spec    spec"
+                      "weapons   weapons    weapons"
                       "spec   spec    spec";
 }
 
@@ -174,7 +174,22 @@ section {
   align-items: center;
 }
 
+.weapons {
+  grid-area: weapons;
+  background-color: white;
+  align-items: center;
+}
 
+.weaponinfo {
+  grid-area: weaponinfo;
+  display: grid;
+  grid-gap: 2px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  background-color: white;
+  text-align: center;
+  align-items: center;
+}
 
 
 .spec {
