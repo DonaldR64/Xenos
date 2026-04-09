@@ -648,7 +648,7 @@ const XR = (() => {
 
             let act = ["attackOn","moveOn","shootOn"];
             _.each(act,a => {
-                let val = aa[a];
+                let val = aa[a] || " "
                 let res = [];
                 if (val.includes("Auto")) {
                     res = [1,parseInt(val.replace(/[^0-9]/g,""))];
