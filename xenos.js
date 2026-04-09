@@ -663,8 +663,26 @@ const XR = (() => {
                 this[a] = parseInt(aa[a]);
             })
 
+            let weaponArray = [];
+            for (let i=1;i<3;i++) {
+                let name = aa["weapon" + i + "Name"];
+                if (!name || name === "") {continue};
+                let range = aa["weapon" + i + "Range"];
+                range = parseInt(range) || "CC";
+                let special = aa["weapon" + i + "Special"] || " ";
+                let fx = aa["weapon" + i + "FX"];
+                let sound = aa["weapon" + i + "Sound"];
+                let weapon = {
+                    name: name,
+                    range: range,
+                    special: special,
+                    fx: fx,
+                    sound: sound,
+                }
+                weaponArray.push(weapon);
+            }
 
-
+            this.weaponArray = weaponArray;
             this.token = token;
             
 
