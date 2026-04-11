@@ -646,6 +646,9 @@ const XR = (() => {
             this.player = (this.faction === "Neutral") ? 2:(state.XR.factions[0] === this.faction)? 0:1;
             this.type = aa.type;
 
+            this.size = Math.round(Math.max(token.get("width"),token.get("height"))/70);
+
+
             let act = ["attackOn","moveOn","shootOn"];
             _.each(act,a => {
                 let val = aa[a] || " "
@@ -703,7 +706,7 @@ const XR = (() => {
         Distance = (unit2) => {
             let hex1 = HexMap[this.hexLabel];
             let hex2 = HexMap[unit2.hexLabel];
-            let distance = hex1.cube.distance(hex2.cube);
+            let distance = hex1.cube.distance(hex2.cube) - unit2.size;
             return distance;
         }
 
