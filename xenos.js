@@ -121,8 +121,10 @@ const XR = (() => {
 
 
     //height is height of terrain element
-    //movecosts
+    //move -> 0 = open, 1 = difficult, 2 = impassable to ground
     //cover for  fire - 0 = None, 1 = Light, 2 = Heavy
+    //los -> additive, once hit 1 next hex is blocked
+    //so woods are .2 -> can see in 5 hexes
 
     const LinearTerrain = {
 
@@ -135,14 +137,21 @@ const XR = (() => {
         return String(val).charAt(0).toUpperCase() + String(val).slice(1);
     }
 
-    const RoadCosts = {leg: 1,tracked: .5, wheeled: .25, halftrack: .5};
 
     const TerrainInfo = {
-        "Woods": {name: "Woods",height: 1, difficult: true, cover: 1},
+        "Woods": {name: "Woods",height: 2, los: "Woods", move: 1, cover: 1},
 
 
 
     }
+
+    const BuildingInfo = {
+
+
+
+    }
+
+
 
     const HillHeights = {
         "#434343": 1,
@@ -603,9 +612,12 @@ const XR = (() => {
             this.cube = offset.toCube();
             this.label = offset.label();
             this.elevation = 0;
+            this.height = 0;
             this.terrain = "Open";
             this.offboard = false;
             this.cover = 0;
+            this.move = 0;
+            this.los = true;
             this.edges = {};
             _.each(DIRECTIONS,a => {
                 this.edges[a] = "Open";
@@ -646,8 +658,8 @@ const XR = (() => {
             this.player = (this.faction === "Neutral") ? 2:(state.XR.factions[0] === this.faction)? 0:1;
             this.type = aa.type;
 
-            this.size = Math.round(Math.max(token.get("width"),token.get("height"))/70);
-
+            let radius = Math.round(Math.max(token.get("width"),token.get("height"))/70);
+            this.size = Math.round(radius/2);
 
             let act = ["attackOn","moveOn","shootOn"];
             _.each(act,a => {
@@ -706,7 +718,8 @@ const XR = (() => {
         Distance = (unit2) => {
             let hex1 = HexMap[this.hexLabel];
             let hex2 = HexMap[unit2.hexLabel];
-            let distance = hex1.cube.distance(hex2.cube) - unit2.size;
+            let distance = hex1.cube.distance(hex2.cube);
+            distance -= (this.size + unit2.size - 1); 
             return distance;
         }
 
@@ -1039,6 +1052,7 @@ const XR = (() => {
         //AddEdges();
         AddTokens();
 
+
         let elapsed = Date.now()-startTime;
         log("Hex Map Built in " + elapsed/1000 + " seconds");
     };
@@ -1093,13 +1107,14 @@ const XR = (() => {
 
 
     const AddTerrain = () => {
+        //part 1 - add terrain that is tokens - woods, rubble
         //add terrain using tokens on map page, either on top or under map
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
         _.each(tokens,token => {
             let name = token.get("name");
             let terrain = TerrainInfo[name];
             if (terrain) {
-log(terrain)
+//log(terrain)
                 let centre = new Point(token.get("left"),token.get('top'));
                 let centreLabel = centre.toCube().label();
                 let hex = HexMap[centreLabel];
@@ -1108,19 +1123,41 @@ log(terrain)
                 } else {
                     hex.terrain += ", " + terrain.name;
                 }
-                hex.height = terrain.height;
-                let costKeys = Object.keys(terrain.moveCosts);
-                _.each(costKeys,key => {
-                    hex.moveCosts[key] = Math.max(hex.moveCosts[key],terrain.moveCosts[key]);
-                    if (terrain.moveCosts[key] === -1) {
-                        hex.moveCosts[key] = -1;
-                        //impasssable
-                    }
-                })
+                hex.height = Math.max(hex.height,terrain.height);
+                hex.los = terrain.los;
                 hex.cover = Math.max(hex.cover,terrain.cover);
+                hex.move = Math.max(hex.move,terrain.move);
             }
             if (name === "Map") {
                 DefineOffboard(token);
+            }
+        })
+
+
+
+
+
+        //part 2 - add buildings
+        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
+
+        _.each(paths,path => {
+            let terrain = BuildingInfo[path.get("stroke").toLowerCase()];
+            if (terrain) {
+                let vertices = translatePoly(path);
+                _.each(HexMap,hex => {
+                    let result = pointInPolygon(hex.centre,vertices);
+                    if (result === true) {
+                        if (hex.terrain === "Open") {
+                            hex.terrain = terrain.name;
+                        } else {
+                            hex.terrain += ", " + terrain.name;
+                        }
+                        hex.height = Math.max(hex.height,terrain.height);
+                        hex.losLevel = Math.max(hex.losLevel,terrain.losLevel);
+                        hex.cover = Math.max(hex.cover,terrain.cover);
+                        hex.move = Math.max(hex.move,terrain.move);
+                    }
+                });
             }
         })
 
@@ -1291,16 +1328,11 @@ log(vertices)
         SetupCard(unit.name,"",unit.faction);
         let hex = HexMap[unit.hexLabel];
 log(hex)
-log(unit.moveType)
 
         outputCard.body.push("Hex: " + unit.hexLabel);
         outputCard.body.push("Terrain: " + hex.terrain);
         outputCard.body.push("Elevation: " + hex.elevation);
-        outputCard.body.push("Move Cost: " + hex.moveCosts[unit.moveType] + " for " + Capit(unit.moveType));
-        if (hex.road === true) {
-            outputCard.body.push("Road in Hex");
-        }
-        let cover = (hex.cover === 0) ? "No Cover":(hex.cover === 1) ? "Cover Save 5+":"Cover Save 4+";
+        let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
         outputCard.body.push("Cover: " + cover);
 
         for (let i=0;i<6;i++) {
@@ -1310,10 +1342,7 @@ log(unit.moveType)
             }
         }
 
-        outputCard.body.push("[hr]")
-        let result = unit.CheckCohesion();
-        result = (result === true) ? " In ":" Not In ";
-        outputCard.body.push("Unit is " + result + " Cohesion");
+
 
 
         
@@ -1628,14 +1657,11 @@ log(target)
 
 
     const CheckLOS = (msg) => {
-
-//add in spotted/unspotted units
         let Tag = msg.content.split(";");
         let shooterID = Tag[1];
         let targetID = Tag[2];
         let shooter = UnitArray[shooterID];
-        let coverLevels = ["No","Light","Heavy"];
-
+        let coverLevels = ["No","Light","Hard"];
         if (!shooter) {
             sendChat("","Not valid shooter");
             return;
@@ -1645,39 +1671,20 @@ log(target)
             sendChat("","Not valid target");
             return;
         }
-
         SetupCard(shooter.name,"LOS",shooter.faction);
         let losResult = LOS(shooter,target);
         let distance = losResult.distance
-        if (distance < 10) {
-            distance = distance + " (" + distance * 100 + "m)";
-        } else {
-            distance = distance + " (" + distance/10 + "km)";
-        }
-        outputCard.body.push("Distance: " + distance);
+        let s = (distance === 1) ? "":"es";
+        outputCard.body.push("Distance: " + distance + " Hex" + s);
         if (losResult.los === false) {
             outputCard.body.push("[#ff0000]No LOS to Target[/#]");
             outputCard.body.push(losResult.losReason);
         } else {
             outputCard.body.push("Shooter has LOS to Target");
             outputCard.body.push("Target has " + coverLevels[losResult.cover] + " Cover");
-            if (losResult.inSmoke === true) {
-                outputCard.body.push("Target is in Smoke");
-            }
-            outputCard.body.push("Target is in the " + losResult.shooterFacing + " Arc");
-            outputCard.body.push("Target is being hit on the " + losResult.targetFacing + " Arc");
-/*
-needs fix for different weapons
-            let bands = ["in Short","in Effective","in Long","Out of"];
-            let final = 3;
-            for (let band = 0;band < 3;band++) {
-                if (losResult.distance <= shooter.range[band]) {
-                    final = band;
-                    break;
-                }
-            }
-            outputCard.body.push("Target is " + bands[final] + " Range");
-*/
+            //outputCard.body.push("Target is in the " + losResult.shooterFacing + " Arc");
+            //outputCard.body.push("Target is being hit on the " + losResult.targetFacing + " Arc");
+
 
 
         }
@@ -1691,12 +1698,12 @@ needs fix for different weapons
     const LOS = (shooter,target) => {
         let los = true;
         let losReason = "";
-        let losBlock = "";
-        
+        let cover = 0;
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
         let distance = shooter.Distance(target);
-        
+
+
         //firing arc on weapon
         let angle = TargetAngle(shooter,target);
         let angleT = TargetAngle(target,shooter);
@@ -1706,45 +1713,87 @@ needs fix for different weapons
         //check lines
         let pt1 = new Point(0,shooterHex.elevation);
         let pt2 = new Point(distance,targetHex.elevation);
-//log("Shooter E: " + shooterHex.elevation);
-//log("Target E: " + targetHex.elevation);
+log("Shooter E: " + shooterHex.elevation);
+log("Target E: " + targetHex.elevation);
+
+        let woodhexes = 0;
+        let startInWoods = (shooterHex.los === "Woods") ? true:false;
+log("Start in Woods: " + startInWoods);
 
         let interCubes = shooterHex.cube.linedraw(targetHex.cube)
         for (let i=0;i<interCubes.length - 1;i++) {
             let label = interCubes[i].label();
-//log(label)
             let interHex = HexMap[label];
-            if (interHex.smoke !== "") {
-                los = false;
-                losBlock = label;
-                losReason = "Blocked by Smoke at " + label;
-                break;
-            }
-            if (interHex.cover === 0) {continue};
+log(label + ": " + interHex.terrain)
             let teH = interHex.height; //terrain in hex
             let edH = 0; //height of any terrain on edge crossed
             let iH = Math.max(teH,edH);
             interHexHeight = iH + interHex.elevation;
-//log("Total Height: " + interHexHeight)
             let pt3 = new Point(i,0);
             let pt4 = new Point(i,interHexHeight);
+            
             if (lineLine(pt1,pt2,pt3,pt4)) {
-                los = false;
-                losBlock = label;
-                losReason = "Blocked by " +  interHex.terrain +" at " + label;
-                break;
+log("Intersect")
+                if (interHex.los === false) {
+                    los = false;
+                    losReason = "Blocked by " +  interHex.terrain;
+                    break;
+                }
+                if (interHex.los === "Woods") {
+                    woodhexes += 1;
+                    if (woodhexes > 3) {
+                        los = false;
+                        losReason = "Blocked by Depth of Woods";
+                        break;
+                    }
+                }
+                if (interHex.los === true) {
+                    if (woodhexes > 0) {
+                        if (startInWoods === false) {
+                            los = false;
+                            losReason = "On Other Side of Woods";
+                            break;
+                        } 
+                    }
+                    startInWoods = false;
+                    woodhexes = 0;
+                }
+                cover = Math.max(cover,interHex.cover);
+            } else {
+                if (woodhexes > 0) {
+                    if (startInWoods === false) {
+                        los = false;
+                        losReason = "On Other Side of Woods";
+                        break;
+                    } 
+                }
+                startInWoods = false;
+                woodhexes = 0;
             }
         }
+
+        //target hex
+        if (targetHex.los === "Woods") {
+            woodhexes += 1;
+            if (woodhexes > 5) {
+                los = false;
+                losReason = "Blocked by Depth of Woods";
+            }
+        } else if (woodhexes > 0 && startInWoods === false) {
+            los = false;
+            losReason = "On Other Side of Woods";
+        }
+        cover = Math.max(cover,targetHex.cover);
+
+log("Cover: " + cover)
 
         let result = {
             los: los,
             losReason: losReason,
-            losBlock: losBlock,
             distance: distance,
-            cover: targetHex.cover,
+            cover: cover,
             shooterFacing: shooterFacing,
             targetFacing: targetFacing,
-            inSmoke: (targetHex.smoke !== "") ? true:false,
         }
 
         return result;
