@@ -1733,7 +1733,7 @@ log(label + ": " + interHex.terrain)
             let pt4 = new Point(i,interHexHeight);
             
             if (lineLine(pt1,pt2,pt3,pt4)) {
-log("Intersect")
+log("Intersect Terrain")
                 if (interHex.los === false) {
                     los = false;
                     losReason = "Blocked by " +  interHex.terrain;
