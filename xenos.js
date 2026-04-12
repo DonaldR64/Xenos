@@ -123,8 +123,7 @@ const XR = (() => {
     //height is height of terrain element
     //move -> 0 = open, 1 = difficult, 2 = impassable to ground
     //cover for  fire - 0 = None, 1 = Light, 2 = Heavy
-    //los -> additive, once hit 1 next hex is blocked
-    //so woods are .2 -> can see in 5 hexes
+    //los -> true, false or Woods
 
     const LinearTerrain = {
 
@@ -703,7 +702,7 @@ const XR = (() => {
 
 
             ModelArray[id] = this;
-            //HexMap[label].tokenIDs.push(id);
+            HexMap[label].tokenIDs.push(id);
 
 
 
@@ -1184,24 +1183,6 @@ const XR = (() => {
                     }
                 });
             }
-            if (path.get("stroke").toLowerCase() === "#ffffff") {
-                let vertices = translatePoly(path);
-log("Road")
-log(vertices)
-                for (let i=0;i<vertices.length - 1;i++) {
-                    let hl1 = vertices[i].label();
-                    let hl2 = vertices[i+1].label();
-                    let hex1 = HexMap[hl1];
-                    let hex2 = HexMap[hl2];
-                    hex1.road = true;
-                    hex2.road = true;
-                    let cubes = hex1.cube.linedraw(hex2.cube);
-                    _.each(cubes,cube => {
-                        let hex = HexMap[cube.label()];
-                        hex.road = true;
-                    })
-                }
-            }
         });
     }
 
@@ -1264,19 +1245,7 @@ log(vertices)
 
 
     const SetupGame = (msg) => {
-        let Tag = msg.content.split(";");
-        let firstFaction = Tag[1];
-        let roads = Tag[2];
-        let firstPlayer = state.XR.factions[0] === firstFaction ? 0:1;
-        state.XR.firstPlayer = firstPlayer;
-        state.XR.turn = 0;
-        state.XR.activePlayer = 2;
-        state.XR.phase = "";
-        RemoveMoveMarkers();
-        state.XR.moveMarkers = [];
-        state.XR.visibility = 70; //can later alter this
-
-        state.XR.roads = (roads === "True") ? true:false;
+        
 
 
 
