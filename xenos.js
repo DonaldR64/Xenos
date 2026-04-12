@@ -71,7 +71,7 @@ const XR = (() => {
         }
     }
 
-    let UnitArray = {};
+    let ModelArray = {};
     let PlatoonArray = {};
     //let CompanyArray = {}; // ? if have multiple detachments then this ?
     
@@ -200,22 +200,22 @@ const XR = (() => {
         }
     };
 
-    const FX = (fxname,unit1,unit2) => {
-        //unit2 is target, unit1 is shooter
-        //if its an area effect, unit1 isnt used
+    const FX = (fxname,model1,model2) => {
+        //model2 is target, model1 is shooter
+        //if its an area effect, model1 isnt used
         if (fxname.includes("System")) {
             //system fx
             fxname = fxname.replace("System-","");
             if (fxname.includes("Blast")) {
                 fxname = fxname.replace("Blast-","");
-                spawnFx(unit2.token.get("left"),unit2.token.get("top"), fxname);
+                spawnFx(model2.token.get("left"),model2.token.get("top"), fxname);
             } else {
-                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxname);
+                spawnFxBetweenPoints(new Point(model1.token.get("left"),model1.token.get("top")), new Point(model2.token.get("left"),model2.token.get("top")), fxname);
             }
         } else {
             let fxType =  findObjs({type: "custfx", name: fxname})[0];
             if (fxType) {
-                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxType.id);
+                spawnFxBetweenPoints(new Point(model1.token.get("left"),model1.token.get("top")), new Point(model2.token.get("left"),model2.token.get("top")), fxType.id);
             }
         }
     }
@@ -269,8 +269,8 @@ const XR = (() => {
     }
 
 
-    const KeyNum = (unit,keyword) => {
-        let key = unit.keywords.split(",");
+    const KeyNum = (model,keyword) => {
+        let key = model.keywords.split(",");
         log(key)
         let num = 1;
         _.each(key,word => {
@@ -626,7 +626,7 @@ const XR = (() => {
         }
     }
 
-    class Unit {
+    class Model {
         constructor(id) {
             let token = findObjs({_type:"graphic", id: id})[0];
             let label = (new Point(token.get("left"),token.get("top"))).label();
@@ -702,7 +702,7 @@ const XR = (() => {
             
 
 
-            UnitArray[id] = this;
+            ModelArray[id] = this;
             //HexMap[label].tokenIDs.push(id);
 
 
@@ -715,11 +715,11 @@ const XR = (() => {
 
 
 
-        Distance = (unit2) => {
+        Distance = (model2) => {
             let hex1 = HexMap[this.hexLabel];
-            let hex2 = HexMap[unit2.hexLabel];
+            let hex2 = HexMap[model2.hexLabel];
             let distance = hex1.cube.distance(hex2.cube);
-            distance -= (this.size + unit2.size - 1); 
+            distance -= (this.size + model2.size - 1); 
             return distance;
         }
 
@@ -781,14 +781,14 @@ const XR = (() => {
             return;
         };
         let id = msg.selected[0]._id;
-        let unit = UnitArray[id];
-        if (!unit) {return};
-        AddAbilities2(unit);
+        let model = ModelArray[id];
+        if (!model) {return};
+        AddAbilities2(model);
     }
 
 
-    const AddAbilities2 = (unit) => {
-        let char = getObj("character", unit.charID);   
+    const AddAbilities2 = (model) => {
+        let char = getObj("character", model.charID);   
 
         let abilityName,action;
         let abilArray = findObjs({_type: "ability", _characterid: char.id});
@@ -797,7 +797,7 @@ const XR = (() => {
             abilArray[a].remove();
         } 
         //Move 
-        if (unit.moveMax > 0) {
+        if (model.moveMax > 0) {
             abilityName = "0 - Move";
             action = "!Activate;Move;@{selected|token_id}";
             AddAbility(abilityName,action,char.id);
@@ -805,8 +805,8 @@ const XR = (() => {
 
         let systemNum = 0;
         //Use Weapons 
-        for (let i=0;i<unit.weapons.length;i++) {
-            let weapon = unit.weapons[i];
+        for (let i=0;i<model.weapons.length;i++) {
+            let weapon = model.weapons[i];
             systemNum++;
             abilityName = systemNum + " - " + weapon.name;
             action = "!Activate;Attack" + i + ";@{selected|token_id}";
@@ -1208,7 +1208,7 @@ log(vertices)
      
     const AddTokens = () => {
         PlatoonArray = {};
-        UnitArray = {};
+        ModelArray = {};
         //create an array of all tokens
         let start = Date.now();
         let tokens = findObjs({
@@ -1225,13 +1225,13 @@ log(vertices)
             let character = getObj("character", token.get("represents"));   
             let gmn = decodeURIComponent(token.get("gmnotes")).toString();
             gmn = gmn.split(";");
-            let unit = new Unit(token.get("id"))
+            let model = new Model(token.get("id"))
 
 
 
         });
         let elapsed = Date.now()-start;
-        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(UnitArray).length + " placed in Unit Array");
+        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(ModelArray).length + " placed in Model Array");
 
     }
 
@@ -1262,38 +1262,6 @@ log(vertices)
 
 
 
-    const PlaceTarget = (msg) => {
-        let Tag = msg.split(";");
-        let id = Tag[0];
-        let type = Tag[1];
-        let unit = UnitArray[id];
-
-        if (type === "Relay") {
-            let charID = "-OWqqZirwy4ocuhD9Llb";
-            let img = "https://files.d20.io/images/105823565/P035DS5yk74ij8TxLPU8BQ/thumb.png?1582679991";           
-            img = getCleanImgSrc(img);
-            let newToken = createObj("graphic", {
-                left: unit.token.get("left"),
-                top: unit.token.get("top"),
-                width: 50,
-                height: 50, 
-                pageid: Campaign().get("playerpageid"),
-                imgsrc: img,
-                layer: "objects",
-                represents: charID,
-                name: "Marker",
-            })
-            let newUnit = new Unit(newToken.id);
-            newUnit.targettingUnitID = id;
-            log(newUnit)
-        }
-
-        
-
-
-
-
-    }
 
     const SetupGame = (msg) => {
         let Tag = msg.content.split(";");
@@ -1323,13 +1291,13 @@ log(vertices)
     const TokenInfo = (msg) => {
         if (!msg.selected) {return};
         let id = msg.selected[0]._id;
-        let unit = UnitArray[id];
-        if (!unit) {return};
-        SetupCard(unit.name,"",unit.faction);
-        let hex = HexMap[unit.hexLabel];
+        let model = ModelArray[id];
+        if (!model) {return};
+        SetupCard(model.name,"",model.faction);
+        let hex = HexMap[model.hexLabel];
 log(hex)
 
-        outputCard.body.push("Hex: " + unit.hexLabel);
+        outputCard.body.push("Hex: " + model.hexLabel);
         outputCard.body.push("Terrain: " + hex.terrain);
         outputCard.body.push("Elevation: " + hex.elevation);
         let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
@@ -1350,23 +1318,23 @@ log(hex)
     }
 
 
-    const BlastCheck = (targetCentre,unit,radius) => {
+    const BlastCheck = (targetCentre,model,radius) => {
         radius = radius * HexInfo.size * 2;
-        let unitCentre = HexMap[unit.hexLabel].centre;
-        let theta = Angle(unit.token.get("rotation")) * Math.PI/180;
-        let w = unit.token.get("width");
-        let h = unit.token.get("height");
+        let modelCentre = HexMap[model.hexLabel].centre;
+        let theta = Angle(model.token.get("rotation")) * Math.PI/180;
+        let w = model.token.get("width");
+        let h = model.token.get("height");
         let squareTokens = ["Infantry","Mortar"]; //tokens without a direction triangle
-        if (squareTokens.includes(unit.type) === false) {
+        if (squareTokens.includes(model.type) === false) {
             h -= 10;    
         }
-        dXmin = unitCentre.x - (w/2);
-        dXmax = unitCentre.x + (w/2);
-        dYmin = unitCentre.y - (h/2);
-        dYmax = unitCentre.y + (h/2);
+        dXmin = modelCentre.x - (w/2);
+        dXmax = modelCentre.x + (w/2);
+        dYmin = modelCentre.y - (h/2);
+        dYmax = modelCentre.y + (h/2);
         scale = pageInfo.scale;
-        cX = (Math.cos(theta) * (targetCentre.x - unitCentre.x)) - (Math.sin(theta)*(targetCentre.y - unitCentre.y)) + unitCentre.x
-        cY = (Math.sin(theta) * (targetCentre.x - unitCentre.x)) + (Math.cos(theta)*(targetCentre.y - unitCentre.y)) + unitCentre.y
+        cX = (Math.cos(theta) * (targetCentre.x - modelCentre.x)) - (Math.sin(theta)*(targetCentre.y - modelCentre.y)) + modelCentre.x
+        cY = (Math.sin(theta) * (targetCentre.x - modelCentre.x)) + (Math.cos(theta)*(targetCentre.y - modelCentre.y)) + modelCentre.y
         //closest point
         eX = Clamp(cX,dXmin,dXmax)
         eY = Clamp(cY,dYmin,dYmax)
@@ -1433,7 +1401,7 @@ log(hex)
         PlaySound("Dice");
         let roll = randomInteger(8);
         let playerID = msg.playerid;
-        let id,unit,player;
+        let id,model,player;
         if (msg.selected) {
             id = msg.selected[0]._id;
         }
@@ -1444,13 +1412,13 @@ log(hex)
             return;
         }
         if (id) {
-            unit = UnitArray[id];
-            if (unit) {
-                faction = unit.faction;
-                player = unit.player;
+            model = ModelArray[id];
+            if (model) {
+                faction = model.faction;
+                player = model.player;
             }
         }
-        if ((!id || !unit) && playerID) {
+        if ((!id || !model) && playerID) {
             faction = state.XR.players[playerID];
             player = (state.XR.factions[0] === faction) ? 0:1;
         }
@@ -1468,67 +1436,14 @@ log(hex)
     }
 
 
-    const PlaceArtToken = (spotterID, artilleryID,type) => {
-        let spotter = UnitArray[spotterID];
-        let artilleryUnit = UnitArray[artilleryID];
-        let radius = (artilleryUnit.artsize - 1) * 100;
-        let img = getCleanImgSrc("https://files.d20.io/images/105823565/P035DS5yk74ij8TxLPU8BQ/thumb.png?1582679991");
-        let name = artilleryUnit.name + " Target";
-        let charID = "-OkLrIEzBQrYJMzCEg5H";
-        let existing = findObjs({_type:"graphic", represents: charID});
-        _.each(existing,tok => {
-            let exist = UnitArray[tok.get("id")];
-            if (exist) {
-                delete UnitArray[tok.get("id")];
-            }
-            tok.remove();
-        })
-
-        let newToken = createObj("graphic", {
-            left: spotter.token.get("left"),
-            top: spotter.token.get("top"),
-            width: 80,
-            height: 80, 
-            pageid: Campaign().get("playerpageid"),
-            imgsrc: img,
-            layer: "objects",
-            represents: charID,
-            tooltip: name,
-            show_tooltip: true,
-            name: name,
-            showname: true,
-            disableTokenMenu: true,
-            showplayers_aura1: true,
-            aura1_color: "#ffff00",
-            aura1_radius: radius,
-            gmn: "TargetIcon",
-        })
-        //redo ability
-        let abilArray = findObjs({_type: "ability", _characterid: charID});
-        //clear old abilities
-        for(let a=0;a<abilArray.length;a++) {
-            abilArray[a].remove();
-        } 
-        
-        let abilityName = (type === "HE") ? "Fire for Effect":"Drop Smoke";
-        let action = "!ArtilleryTwo;" + newToken.get("id") + ";" + spotterID + ";" + artilleryID + ";" + type
-        AddAbility(abilityName,action,charID);
-        toFront(newToken);
-
-        let target = new Unit(newToken.get("id"));
-log(target)
-
-
-    }
-
 
 
     const ClearState = (msg) => {
         LoadPage();
         BuildMap();
         //clear arrays
+        ModelArray = {};
         UnitArray = {};
-        PlatoonArray = {};
         //clear token info
         let tokens = findObjs({
             _pageid: Campaign().get("playerpageid"),
@@ -1660,13 +1575,13 @@ log(target)
         let Tag = msg.content.split(";");
         let shooterID = Tag[1];
         let targetID = Tag[2];
-        let shooter = UnitArray[shooterID];
+        let shooter = ModelArray[shooterID];
         let coverLevels = ["No","Light","Hard"];
         if (!shooter) {
             sendChat("","Not valid shooter");
             return;
         }
-        let target = UnitArray[targetID];
+        let target = ModelArray[targetID];
         if (!target) {
             sendChat("","Not valid target");
             return;
@@ -1807,21 +1722,20 @@ log("Cover: " + cover)
 
     const changeGraphic = (tok,prev) => {
         //RemoveLines();
-        let unit = UnitArray[tok.id];
-        if (unit) {
+        let model = ModelArray[tok.id];
+        if (model) {
             let label = (new Point(tok.get("left"),tok.get("top"))).label();
             let prevLabel = (new Point(prev.left,prev.top)).label();
-            if (label !== unit.hexLabel || tok.get("rotation") !== prev.rotation) {
+            if (label !== model.hexLabel || tok.get("rotation") !== prev.rotation) {
                 
-
-                log(unit.name + ' is moving from ' + unit.hexLabel + ' to ' + label)
-                let index = HexMap[unit.hexLabel].tokenIDs.indexOf(unit.id);
+                log(model.name + ' is moving from ' + model.hexLabel + ' to ' + label)
+                let index = HexMap[model.hexLabel].tokenIDs.indexOf(model.id);
                 if (index > -1) {
-                    HexMap[unit.hexLabel].tokenIDs.splice(index,1);
+                    HexMap[model.hexLabel].tokenIDs.splice(index,1);
                 }
-                HexMap[label].tokenIDs.push(unit.id);
-                unit.hexLabel = label;
-                unit.token.set({
+                HexMap[label].tokenIDs.push(model.id);
+                model.hexLabel = label;
+                model.token.set({
                     left: HexMap[label].centre.x,
                     top: HexMap[label].centre.y,
                 })
@@ -1842,8 +1756,8 @@ log("Cover: " + cover)
     const destroyGraphic = (obj) => {
         let name = obj.get("name");
         log(name + " Destroyed")
-        if (UnitArray[obj.get("id")]) {
-            delete UnitArray[obj.get("id")];
+        if (ModelArray[obj.get("id")]) {
+            delete ModelArray[obj.get("id")];
         }
 
 
@@ -1865,8 +1779,8 @@ log("Cover: " + cover)
             case '!Dump':
                 log("State");
                 log(state.XR);
-                log("Units");
-                log(UnitArray);
+                log("Models");
+                log(ModelArray);
                 log("Platoons");
                 log(PlatoonArray)
                 break;
