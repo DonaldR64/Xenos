@@ -1775,7 +1775,18 @@ log("Cover: " + cover)
         sendChat("","Unit Created");
     }
 
+    const ActivateUnit = (msg) => {
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let model = ModelArray[id];
+        let unit = UnitArray[model.unitID];
+        
 
+
+
+
+
+    }
 
 
 
@@ -1867,7 +1878,9 @@ log("Cover: " + cover)
             case '!CreateUnit':
                 CreateUnit(msg);
                 break;
-
+            case '!Activate':
+                ActivateUnit(msg);
+                break;
 
 
             case '!SetupGame':
