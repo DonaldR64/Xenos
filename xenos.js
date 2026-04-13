@@ -118,6 +118,10 @@ const XR = (() => {
 
     }
 
+    const UnitMarkers = ["Plus-1d4::2006401","Minus-1d4::2006429","Plus-1d6::2006402","Minus-1d6::2006434","Plus-1d20::2006409","Minus-1d20::2006449","Hot-or-On-Fire-2::2006479","Animal-Form::2006480","Red-Cloak::2006523","A::6001458","B::6001459","C::6001460","D::6001461","E::6001462","F::6001463","G::6001464","H::6001465","I::6001466","J::6001467","L::6001468","M::6001469","O::6001471","P::6001472","Q::6001473","R::6001474","S::6001475"];
+
+
+
 
 
     //height is height of terrain element
@@ -677,6 +681,8 @@ const XR = (() => {
                 this[a] = parseInt(aa[a]);
             })
 
+            this.wounds = parseInt(aa.wounds);
+
             let weaponArray = [];
             for (let i=1;i<3;i++) {
                 let name = aa["weapon" + i + "Name"];
@@ -714,6 +720,9 @@ const XR = (() => {
 
 
 
+
+
+
         Distance = (model2) => {
             let hex1 = HexMap[this.hexLabel];
             let hex2 = HexMap[model2.hexLabel];
@@ -730,6 +739,41 @@ const XR = (() => {
 
 
     }
+
+    class Unit {
+        constructor(mID,uID) {
+            let refModel = ModelArray[mID];
+            if (!refModel) {refModel = new Model(mID)};
+            this.faction = refModel.faction;
+            this.player = refModel.player;
+            if (!uID) {
+                uID = stringGen();
+            }
+            this.id = uID;
+            this.tokenIDs = [mID];
+            this.symbol = "";
+            UnitArray[uID] = this;
+        }
+
+        AddModel(mID) {
+            if (this.tokenIDs.includes(mID) === false) {
+                this.tokenIDs.push(mID);
+                ModelArray[mID].unitID = this.id;
+            }
+        }
+
+
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1683,6 +1727,66 @@ log("Cover: " + cover)
         return result;
     }
 
+    const CreateUnit = (msg) => {
+        if (!msg.selected) {
+            sendChat("","No Token Selected");
+            return;
+        };
+
+        let unit = new Unit(msg.selected[0]._id);
+        state.XR.unitNum[unit.player] += 1;
+        unit.symbol = "status_" + UnitMarkers[state.XR.unitNum] || "status_brown";
+
+        let number = (msg.selected.length > 1) ? 1:"";
+        _.each(msg.selected,e => {
+            let id = e._id;
+            let model = ModelArray[id];
+            if (!model) {model = new Model(id)};
+            unit.AddModel(id);
+            model.token.set({
+                name: model.charName + " " + number,
+                tint_color: "transparent",
+                aura1_color: "transparent",
+                aura1_radius: .1,
+                aura2_color: "transparent",
+                aura2_radius: 0,
+                showplayers_bar1: false,
+                showplayers_bar2: false,
+                showplayers_bar3: false,
+                showname: true,
+                showplayers_aura1: true,
+                showplayers_aura2: true,
+                gmnotes: unit.id,
+                statusmarkers: unit.symbol,
+                tooltip: "",
+            });     
+            if (model.wounds > 1) {
+                model.token.set({
+                    bar1_value: wounds,
+                    bar1_max: wounds,
+                })
+            }
+        })
+        ModelArray[msg.selected[0]._id].token.set("aura1_color","#00ff00");
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1759,6 +1863,11 @@ log("Cover: " + cover)
             case '!AddAbilities':
                 AddAbilities(msg);
                 break;
+            case '!CreateUnit':
+                CreateUnit(msg);
+                break;
+
+
 
             case '!SetupGame':
                 SetupGame(msg);
