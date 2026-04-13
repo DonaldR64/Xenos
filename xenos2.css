@@ -143,12 +143,36 @@ section {
 
 }
 
-input[type="hidden"][value="Off"].weapon6-status ~ .weapon6{
+input[type="hidden"][value="Trooper"].trooperstatus ~ .attr{
     display: none;
 }
-input[type="hidden"][value="Equipped"].weapon6-status ~ .weapon6{
+input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr{
     display: grid;
 }
+
+input[type="hidden"][value="Trooper"].trooperstatus ~ .attr2{
+    display: none;
+}
+input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr2{
+    display: grid;
+}
+
+input[type="hidden"][value="Trooper"].trooperstatus ~ .attr3{
+    display: none;
+}
+input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr3{
+    display: grid;
+}
+
+input[type="hidden"][value="Trooper"].trooperstatus ~ .weapons{
+    display: none;
+}
+input[type="hidden"][value="Unit Leader"].trooperstatus ~ .weapons{
+    display: grid;
+}
+
+
+
 
 
 .attrinfo{
