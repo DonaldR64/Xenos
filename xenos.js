@@ -704,7 +704,7 @@ const XR = (() => {
 
             this.weaponArray = weaponArray;
             this.token = token;
-            
+            this.unitID = "";
 
 
             ModelArray[id] = this;
@@ -749,6 +749,7 @@ const XR = (() => {
             if (!uID) {
                 uID = stringGen();
             }
+            refModel.unitID = uID;
             this.id = uID;
             this.tokenIDs = [mID];
             this.symbol = "";
@@ -1232,7 +1233,7 @@ const XR = (() => {
 
      
     const AddTokens = () => {
-        PlatoonArray = {};
+        UnitArray = {};
         ModelArray = {};
         //create an array of all tokens
         let start = Date.now();
@@ -1249,11 +1250,14 @@ const XR = (() => {
         tokens.forEach((token) => {
             let character = getObj("character", token.get("represents"));   
             let gmn = decodeURIComponent(token.get("gmnotes")).toString();
-            gmn = gmn.split(";");
-            let model = new Model(token.get("id"))
-
-
-
+            if (gmn) {
+                let model = new Model(token.get("id"))
+                let unit = UnitArray[gmn];
+                if (!unit) {
+                    unit = new Unit(token.get("id"),gmn);
+                }
+                unit.AddModel(model.id);
+            }
         });
         let elapsed = Date.now()-start;
         log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(ModelArray).length + " placed in Model Array");
@@ -1493,7 +1497,6 @@ log(hex)
             players: {},
             factions: ["",""],
             unitNum: [0,0],
-            unitInfo: {},
             lines: [],
             turn: 0,
             phase: "Deployment",
@@ -1759,6 +1762,7 @@ log("Cover: " + cover)
                 gmnotes: unit.id,
                 statusmarkers: unit.symbol,
                 tooltip: "",
+                gmnotes: unit.id,
             });     
             if (model.wounds > 1) {
                 model.token.set({
@@ -1768,10 +1772,7 @@ log("Cover: " + cover)
             }
         })
         ModelArray[msg.selected[0]._id].token.set("aura1_color","#00ff00");
-
-
-
-
+        sendChat("","Unit Created");
     }
 
 
