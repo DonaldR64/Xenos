@@ -681,7 +681,7 @@ const XR = (() => {
                 this[a] = parseInt(aa[a]);
             })
 
-            this.wounds = parseInt(aa.wounds);
+            this.wounds = parseInt(aa.wounds) || 1;
 
             let weaponArray = [];
             for (let i=1;i<3;i++) {
@@ -1750,7 +1750,7 @@ log("Cover: " + cover)
                 name: model.charName + " " + number,
                 tint_color: "transparent",
                 aura1_color: "transparent",
-                aura1_radius: .1,
+                aura1_radius: .05,
                 aura2_color: "transparent",
                 aura2_radius: 0,
                 showplayers_bar1: false,
@@ -1766,8 +1766,8 @@ log("Cover: " + cover)
             });     
             if (model.wounds > 1) {
                 model.token.set({
-                    bar1_value: wounds,
-                    bar1_max: wounds,
+                    bar1_value: model.wounds,
+                    bar1_max: model.wounds,
                 })
             }
         })
