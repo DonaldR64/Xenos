@@ -1796,9 +1796,18 @@ log("Cover: " + cover)
     const ActivateUnit = (msg) => {
         let Tag = msg.content.split(";");
         let id = Tag[1];
+        let order = Tag[2]; //Shoot or Move or both for vehicles
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
-        
+        let errorMsg = [];
+
+        if (model.token.get("aura1_color") !== "#00ff00") {
+            errorMsg.push("Unit has already Activated this turn");
+        }
+
+
+
+
 
 
 
