@@ -2,6 +2,7 @@
 /*Configure the tab buttons*/
 .sheet-input,
 .sheet-display,
+.sheet-display2,
 .sheet-abilities {
     display: none;
 }
