@@ -2,6 +2,7 @@
 <div>
     <button type="action" name="act_input" >Input</button>
     <button type="action" name="act_display" >Display</button>
+    <button type="action" name="act_display2" >Display2</button>
     <button type="action" name="act_abilities" >Special Rules</button>
 </div>
 
@@ -89,92 +90,124 @@
     <input type="hidden" name="attr_faction"/>
     <div class="mysheet">
       <div class="bits">
-        <main>
-
-
-
-          <section class="common">
+        <div class="main">
+            <div class="common">
                 <div class="top-right">
                     <h1><span name="attr_character_name"></span></h1>   
                     <h3><span name="attr_faction"></span></h3>
                     <h3><span name="attr_type"></span></h3>
                 </div>
               <img alt="Character Avatar" name="attr_character_avatar" style="width:600px;height:auto; bottom: 0;"/>
-          </section>
-
-        <input type="hidden" name="attr_rank" class="trooperstatus" value="Trooper">
-          <section class="attr">
-            <h3>Activations</h3>
-            <div class="attrinfo">
-                <h4>Attack</h4>
-                <h4>Move</h4>
-                <h4>Shoot</h4>
-                <h4 style="color: darkred;"><span name="attr_attackOn"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_moveOn"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_shootOn"></span></h4>
             </div>
-          </section>
 
-        <input type="hidden" name="attr_rank" class="trooperstatus" value="Trooper">
-          <section class="attr2">
-            <h3>Stats</h3>
-            <div class="attr2info">
-                <h4>Movement</h4>
-                <h4>Armour</h4>
-                <h4>Courage</h4>
-                <h4>Wounds</h4>
-                <h4 style="color: darkred;"><span name="attr_moveRate"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_armour"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_courage"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_wounds"></span></h4>
+            <div class="attr">
+                <h3>Activations</h3>
+                <div class="attrinfo">
+                    <h4>Attack</h4>
+                    <h4>Move</h4>
+                    <h4>Shoot</h4>
+                    <h4 style="color: darkred;"><span name="attr_attackOn"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_moveOn"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_shootOn"></span></h4>
+                </div>
             </div>
-          </section>
 
-
-        <input type="hidden" name="attr_rank" class="trooperstatus" value="Trooper">
-          <section class="attr3">
-            <h3>Combat</h3>
-            <div class="attr3info">
-                <h4>Attack</h4>
-                <h4>Defence</h4>
-                <h4>Shoot</h4>
-                <h4 style="color: darkred;"><span name="attr_attackVal"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_defenceVal"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_shootVal"></span></h4>
+            <div class="attr2">
+                <h3>Stats</h3>
+                <div class="attr2info">
+                    <h4>Movement</h4>
+                    <h4>Armour</h4>
+                    <h4>Courage</h4>
+                    <h4>Wounds</h4>
+                    <h4 style="color: darkred;"><span name="attr_moveRate"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_armour"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_courage"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_wounds"></span></h4>
+                </div>
             </div>
-          </section>
 
-        <input type="hidden" name="attr_rank" class="trooperstatus" value="Trooper">
-          <section class="weapons">
-            <h3>Weapons</h3>
-            <div class="weaponinfo">
-                <h4>Name</h4>
-                <h4>Range Band</h4>
-                <h4>Special</h4>
-                <h4 style="color: darkred;"><span name="attr_weapon1Name"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_weapon1Range"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_weapon1Special"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_weapon2Name"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_weapon2Range"></span></h4>
-                <h4 style="color: darkred;"><span name="attr_weapon2Special"></span></h4>
+            <div class="attr3">
+                <h3>Combat</h3>
+                <div class="attr3info">
+                    <h4>Attack</h4>
+                    <h4>Defence</h4>
+                    <h4>Shoot</h4>
+                    <h4 style="color: darkred;"><span name="attr_attackVal"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_defenceVal"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_shootVal"></span></h4>
+                </div>
             </div>
-          </section>
+
+            <div class="weapons">
+                <h3>Weapons</h3>
+                <div class="weaponinfo">
+                    <h4>Name</h4>
+                    <h4>Range Band</h4>
+                    <h4>Special</h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon1Name"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon1Range"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon1Special"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon2Name"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon2Range"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_weapon2Special"></span></h4>
+                </div>
+            </div>
 
 
 
-        <input type="hidden" name="attr_rank" class="trooperstatus" value="Trooper">
-          <section class="spec">
-            <h3>Special Abilities</h3>
-            <h4 style="color: darkred;"><span name="attr_special"></span></h4>
-          </section>
+
+            <div class="spec">
+                <h3>Special Abilities</h3>
+                <h4 style="color: darkred;"><span name="attr_special"></span></h4>
+            </div>
 
 
 
 
-        </main>
+        </div>
       </div>
     </div>    
 </div>
+
+
+
+
+<div class="sheet-display2">
+    <input type="hidden" name="attr_faction"/>
+    <div class="mysheet">
+      <div class="bits">
+        <div class="main2">
+            <div class="common">
+                <div class="top-right">
+                    <h1><span name="attr_character_name"></span></h1>   
+                    <h3><span name="attr_faction"></span></h3>
+                    <h3><span name="attr_type"></span></h3>
+                </div>
+              <img alt="Character Avatar" name="attr_character_avatar" style="width:600px;height:auto; bottom: 0;"/>
+            </div>
+
+            <div class="attr4">
+                <h3>Stats</h3>
+                <div class="attr4info">
+                    <h4>Movement</h4>
+                    <h4>Wounds</h4>
+                    <h4 style="color: darkred;"><span name="attr_moveRate"></span></h4>
+                    <h4 style="color: darkred;"><span name="attr_wounds"></span></h4>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>    
+</div>
+
+
+
+
+
+
+
+
+
 
 
 <div class="sheet-abilities">
@@ -240,7 +273,7 @@
 
 
 <script type="text/worker">
-    const buttonlist = ["input","display","abilities"];
+    const buttonlist = ["input","display","display2""abilities"];
     buttonlist.forEach(button => {
         on(`clicked:${button}`, function() {
             setAttrs({
@@ -250,6 +283,9 @@
     });
     
     on("sheet:opened", function() {
+        
+
+
         setAttrs({sheetTab:"display"});
     });
 

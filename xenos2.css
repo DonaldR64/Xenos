@@ -9,6 +9,7 @@
 /* show the selected tab */
 .sheet-tabstoggle[value="input"] ~ div.sheet-input,
 .sheet-tabstoggle[value="display"] ~ div.sheet-display,
+.sheet-tabstoggle[value="display2"] ~ div.sheet-display2,
 .sheet-tabstoggle[value="abilities"] ~ div.sheet-abilities {
     display: block;
 }
@@ -38,7 +39,7 @@ input[type="hidden"][name="attr_faction"][value="Blood Angels"] ~ .mysheet {
 
 
 
-main {
+.main {
   display: grid;
   width: 800px;
   height: 550px;
@@ -53,6 +54,17 @@ main {
 }
 
 
+.main2 {
+  display: grid;
+  width: 800px;
+  height: 550px;
+  grid-gap: 4px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-areas:"common common common"
+                      "common common common"
+                      "attr4   attr4   attr4";
+}
 
 
 
@@ -143,42 +155,12 @@ section {
 
 }
 
-input[type="hidden"][value="Trooper"].trooperstatus ~ .attr{
-    display: none;
-}
-input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr{
-    display: grid;
-}
+.attr4 {
+  grid-area: attr4;
+  background-color: white;
+  align-items: center;
 
-input[type="hidden"][value="Trooper"].trooperstatus ~ .attr2{
-    display: none;
 }
-input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr2{
-    display: grid;
-}
-
-input[type="hidden"][value="Trooper"].trooperstatus ~ .attr3{
-    display: none;
-}
-input[type="hidden"][value="Unit Leader"].trooperstatus ~ .attr3{
-    display: grid;
-}
-
-input[type="hidden"][value="Trooper"].trooperstatus ~ .weapons{
-    display: none;
-}
-input[type="hidden"][value="Unit Leader"].trooperstatus ~ .weapons{
-    display: grid;
-}
-
-input[type="hidden"][value="Trooper"].trooperstatus ~ .spec{
-    display: none;
-}
-input[type="hidden"][value="Unit Leader"].trooperstatus ~ .spec{
-    display: grid;
-}
-
-
 
 
 .attrinfo{
@@ -213,6 +195,18 @@ input[type="hidden"][value="Unit Leader"].trooperstatus ~ .spec{
   text-align: center;
   align-items: center;
 }
+
+.attr4info{
+  grid-area: attr2info;
+  display: grid;
+  grid-gap: 2px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  background-color: white;
+  text-align: center;
+  align-items: center;
+}
+
 
 .weapons {
   grid-area: weapons;
