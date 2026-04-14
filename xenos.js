@@ -836,6 +836,23 @@ const XR = (() => {
             delete UnitArray[this.id];
         }
 
+        Suppress() {
+            _.each(this.tokenIDs,tokenID => {
+                let model = ModelArray[tokenID];
+                model.token.set("tint_color","#ff0000");
+            })
+            let leader = ModelArray[unit.leaderID];
+            leader.token.set("aura1_color","#ff0000");
+        }
+
+        Rally() {
+            _.each(this.tokenIDs,tokenID => {
+                let model = ModelArray[tokenID];
+                model.token.set("tint_color","transparent");
+            })
+            let leader = ModelArray[unit.leaderID];
+            leader.token.set("aura1_color","#000000");
+        }
 
 
 
@@ -1924,7 +1941,7 @@ log("Cover: " + cover)
             outputCard.body.push("Unit has Rallied");
         } 
         if (result !== "Rout") {
-            model.token.set("aura1_color","#000000");
+            unit.Rally();
         }
         PrintCard();
     }
@@ -1999,7 +2016,7 @@ line = courageTip //modify this
                     unit.Damage(1);
                 } else {
                     outputCard.body.push("The Unit is Suppressed");
-                    unitLeader.token.set("aura1_color","#ff0000");
+                    unit.Suppress();
                 }
                 outputCard.body.push("The Unit must immediately Retreat");
                 return false;
