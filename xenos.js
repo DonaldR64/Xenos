@@ -1935,18 +1935,21 @@ log("Cover: " + cover)
             courageTip += "<br>-1 as Detachment Casualties";
         }
 
-        let rolls = [];
+        let line = "Rolls: ";
         let total = 0;
         for (let i=0;i<dice;i++) {
             let roll = randomInteger(6);
-            rolls.push(roll);
             total += roll;
+            line += DisplayDice(roll,Factions[unit.faction].dice,24);
+            if (i > 0) {
+                line += " ";
+            }
         }
         total += mods;
-
         //display rolls with tip
-
-
+        outputCard.body.push(line);
+line = courageTip //modify this
+        outputCard.body.push(line + total);
         if (total >= target) {
 
 
