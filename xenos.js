@@ -111,7 +111,7 @@ const XR = (() => {
     const SM = {
         supp: "status_yellow",
         unavail: "status_oneshot::5503748",
-        hug: "status_Disadvantage-or-Down::2006464",
+        gtg: "status_Disadvantage-or-Down::2006464",
 
 
 
@@ -1916,7 +1916,26 @@ log("Cover: " + cover)
         }
         if (ErrorMsg(errorMsg) === true) {return};
 
+        if (order === "Move") {
+            let result = ActivationTest(unit,"Move",2,0);
+            if (result === true) {
+                outputCard.body.push("Unit can complete its Movement, it has a movement rate of " + moveRate);
+            } else {
+                outputCard.body.push("The Turn is over")
+            }
+        } else if (order === "Go to Ground") {
+            let result = ActivationTest(unit,"Move",2,0);
+            if (result === true) {
+                outputCard.body.push("Unit goes to Ground");
+                model.token.set(SM.gtg,true);
+            } else {
+                outputCard.body.push("The Turn is over")
+            }
+        } else {
 
+
+
+        }
 
 
 
@@ -1983,8 +2002,8 @@ log("Cover: " + cover)
     }
 
 
-    const ActivationTest = (unit,stat,dice) => {
-        let target = unit[stat][0];
+    const ActivationTest = (unit,stat,dice,pos = 0) => {
+        let target = unit[stat][pos];
         let targetText = target + "+";
         if (target === 1) {targetText = "Auto"}
         let tip = "Stat: " + stat + ": " + targetText;
