@@ -171,6 +171,12 @@ input[type="hidden"][value="Unit Leader"].trooperstatus ~ .weapons{
     display: grid;
 }
 
+input[type="hidden"][value="Trooper"].trooperstatus ~ .spec{
+    display: none;
+}
+input[type="hidden"][value="Unit Leader"].trooperstatus ~ .spec{
+    display: grid;
+}
 
 
 
