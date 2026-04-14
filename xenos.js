@@ -799,8 +799,42 @@ const XR = (() => {
             return closestDistance;
         }
 
-//when unit destroyed, update detachment points
+        Damage(damage) {
+            //if a single token then can apply damage, possibly destroy unit
+            //if has multiple tokens, can put in output to remove individual models to damage total, unless damage > total then destroy unit
+            if (this.tokenIDs.length === 1) {
+                let model = ModelArray[this.tokenIDs[0]];
+                let wounds = parseInt(model.token.get("bar1_value")) - damage;
+                if (wounds <= 0) {
+                    outputCard.body.push("Damage Destroys the Unit");
+                    this.Destroy();
+                } else {
+                    model.token.set("bar1_value",wounds);
+                }
+            } else {
+                let totalWounds = 0;
+                _.each(this.tokenIDs,tokenID => {
+                    totalWounds += parseInt(ModelArray[tokenID].token.get("bar1_value"));
+                });
+                if (totalWounds <= damage) {
+                    outputCard.body.push("Damage Destroys the Unit");
+                    this.Destroy();
+                } else {
+                    let s = (damage === 1) ? "":"s";
+                    outputCard.body.push("Apply Damage to Model" + s);
+                }
+            }
+        }
 
+        Destroy() {
+            _.each(this.tokenIDs,tokenID => {
+                let model = ModelArray[tokenID];
+                model.token.remove();
+                delete ModelArray[tokenID];
+            })
+            delete state.XR.unitInfo[this.id];
+            delete UnitArray[this.id];
+        }
 
 
 
@@ -1886,16 +1920,20 @@ log("Cover: " + cover)
         }
         let result = CourageTest(unit);
         outputCard.body.push(result.text);
-        if (result.result === true) {
-            model.token.set("aura1_color","#000000");
+        if (result === true) {
+            outputCard.body.push("Unit has Rallied");
         } 
+        if (result !== "Rout") {
+            model.token.set("aura1_color","#000000");
+        }
         PrintCard();
     }
 
     const CourageTest = (unit,casualties = 0) => {
         let currentStrength = 0;
         let inCover = 0;
-        let target = ModelArray[unit.leaderID].courage;
+        let unitLeader = ModelArray[unit.leaderID]
+        let target = unitLeader.courage;
         let courageTip = "Unit Courage: " + target;
         _.each(unit.tokenIDs,tokenID => {
             let model = ModelArray[tokenID];
@@ -1951,18 +1989,23 @@ log("Cover: " + cover)
 line = courageTip //modify this
         outputCard.body.push(line + total);
         if (total >= target) {
-
-
-
-
+            outputCard.body.push("The Unit makes the Courage Test");
+            return true;
+        } else {
+            outputCard.body.push("[/#ff0000]The Unit fails the Courage Test[/#]")
+            if (total > 0) {
+                if (unitLeader.token.get("aura1_color") === "#ff0000") {
+                    outputCard.body.push("It loses another Strength Point");
+                    unit.Damage(1);
+                } 
+                outputCard.body.push("The Unit must immediately Retreat");
+                return false;
+            } else {
+                outputCard.body.push("[/#ff0000]The Unit Routs from the Field![/#]");
+                unit.Destroy();
+                return "Rout";
+            }
         }
-
-
-
-
-
-
-
     }
 
 
