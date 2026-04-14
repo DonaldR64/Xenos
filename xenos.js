@@ -839,10 +839,10 @@ const XR = (() => {
         Suppress() {
             _.each(this.tokenIDs,tokenID => {
                 let model = ModelArray[tokenID];
-                model.token.set("tint_color","#ff0000");
+                model.token.set("tint_color","#ffff00");
             })
             let leader = ModelArray[unit.leaderID];
-            leader.token.set("aura1_color","#ff0000");
+            leader.token.set("aura1_color","#ffff00");
         }
 
         Rally() {
@@ -1905,7 +1905,7 @@ log("Cover: " + cover)
     const ActivateUnit = (msg) => {
         let Tag = msg.content.split(";");
         let id = Tag[1];
-        let order = Tag[2]; //Shoot or Move or both for vehicles
+        let order = Tag[2]; //Move, Shoot, Attack, others, options set in abilities
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
@@ -1913,7 +1913,7 @@ log("Cover: " + cover)
         if (model.token.get("aura1_color") !== "#00ff00") {
             errorMsg.push("Unit has already Activated this turn");
         }
-
+        if (ErrorMsg(errorMsg) === true) {return};
 
 
 
@@ -1924,6 +1924,18 @@ log("Cover: " + cover)
 
     }
 
+    const ErrorMsg = (msgs) => {
+        if (msgs.length === 0) {return false};
+        _.each(msgs,msg => {
+            outputCard.body.push(msg);
+        })
+        PrintCard();
+        return true;
+    }
+
+
+
+
 
     const RallyUnit = (msg) => {
         let Tag = msg.content.split(";");
@@ -1932,9 +1944,10 @@ log("Cover: " + cover)
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
         SetupCard(unit.name,"Rally",unit.faction);
-        if (model.token.get("aura1_color") !== "#ff0000") {
+        if (model.token.get("aura1_color") !== "#ffff00") {
             errorMsg.push("Unit is not Suppressed");
         }
+        if (ErrorMsg(errorMsg) === true) {return};
         let result = CourageTest(unit);
         outputCard.body.push(result.text);
         if (result === true) {
@@ -1945,6 +1958,61 @@ log("Cover: " + cover)
         }
         PrintCard();
     }
+
+    const WildCharge = (msg) => {
+        //testing to see if unit needs to test for wild charge is done at start of players turn, unit leaders have red auras
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let model = ModelArray[id];
+        let unit = UnitArray[model.unitID];
+        let errorMsg = [];
+        SetupCard(unit.name,"Wild Charge",unit.faction);
+        if (model.token.get("aura1_color") !== "#ff0000") {
+            errorMsg.push("Unit is not Subject to Wild Charge");
+        }
+        if (ErrorMsg(errorMsg) === true) {return};
+        let result = ActivationTest(unit,"Attack",2);
+        outputCard.body.push(result.text);
+        if (result === true) {
+            outputCard.body.push("Unit has may conduct an Attack against an enemy unit in charge range");
+        } else {
+            outputCard.body.push("Unit's turn is done.")
+        }
+        PrintCard();
+    }
+
+
+    const ActivationTest = (unit,stat,dice) => {
+        let target = unit[stat][0];
+        let targetText = target + "+";
+        if (target === 1) {targetText = "Auto"}
+        let tip = "Stat: " + stat + ": " + targetText;
+        tip += "<br>Dice: " + dice;
+
+        let line = "Rolls: ";
+        let total = 0;
+        for (let i=0;i<dice;i++) {
+            let roll = randomInteger(6);
+            total += roll;
+            line += DisplayDice(roll,Factions[unit.faction].dice,24);
+            if (i > 0) {
+                line += " ";
+            }
+        }
+        outputCard.body.push(line);
+        if (total >= target) {
+            line = '[Success: ](#" class="showtip" title="' + tip + ')';
+            return true;
+        } else {
+            line = '[Failure: ](#" class="showtip" title="' + tip + ')';
+            return false;
+        }
+    }
+
+
+
+
+
 
     const CourageTest = (unit,casualties = 0) => {
         let currentStrength = 0;
@@ -2003,7 +2071,7 @@ log("Cover: " + cover)
         total += mods;
         //display rolls with tip
         outputCard.body.push(line);
-line = courageTip //modify this
+        line = '[Total: ](#" class="showtip" title="' + courageTip + ')';
         outputCard.body.push(line + total);
         if (total >= target) {
             outputCard.body.push("The Unit makes the Courage Test");
@@ -2011,7 +2079,7 @@ line = courageTip //modify this
         } else {
             outputCard.body.push("[/#ff0000]The Unit fails the Courage Test[/#]")
             if (total > 0) {
-                if (unitLeader.token.get("aura1_color") === "#ff0000") {
+                if (unitLeader.token.get("aura1_color") === "#ffff00") {
                     outputCard.body.push("It loses another Strength Point");
                     unit.Damage(1);
                 } else {
