@@ -283,10 +283,14 @@
     });
     
     on("sheet:opened", function() {
-
-
-
-        setAttrs({sheetTab:"display"});
+        getAttrs(["rank"], function(values) {
+            let rank = values.rank;
+            let tab = "display"
+            if (rank === "Trooper") {
+                tab = "display2";
+            }
+            setAttrs({sheetTab:tab});
+        });
     });
 
 </script>
