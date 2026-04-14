@@ -651,6 +651,7 @@ const XR = (() => {
             this.startHexLabel = label;
             this.startRotation = token.get("rotation");
             this.special = aa.special || " ";
+            this.rank = aa.rank || "Trooper";
 
             this.faction = aa.faction || "Neutral";
             if (state.XR.factions[0] === "") {
@@ -753,13 +754,20 @@ const XR = (() => {
             this.id = uID;
             this.tokenIDs = [mID];
             this.symbol = "";
+            if (refModel.rank !== "Trooper") {
+                this.leaderID = mID;
+            }
             UnitArray[uID] = this;
         }
 
         AddModel(mID) {
             if (this.tokenIDs.includes(mID) === false) {
                 this.tokenIDs.push(mID);
-                ModelArray[mID].unitID = this.id;
+                let model = ModelArray[mID];
+                model.unitID = this.id;
+                if (model.rank !== "Trooper") {
+                    this.leaderID = mID;
+                }
             }
         }
 
@@ -1740,17 +1748,28 @@ log("Cover: " + cover)
         state.XR.unitNum[unit.player] += 1;
         unit.symbol = "status_" + UnitMarkers[state.XR.unitNum] || "status_brown";
 
-        let number = (msg.selected.length > 1) ? 1:"";
+        let number = 1;
         _.each(msg.selected,e => {
             let id = e._id;
             let model = ModelArray[id];
             if (!model) {model = new Model(id)};
             unit.AddModel(id);
+            let a1c,name;
+            if (model.rank === "Trooper") {
+                a1c = "transparent";
+                name = model.charName + " " + number;
+                number++;
+            } else {
+                a1c = "#00ff00";
+                name = model.charName;
+//call an actual name function for leaders eg. Brother Sgt or similar
+            }
             model.token.set({
-                name: model.charName + " " + number,
+                name: name,
                 tint_color: "transparent",
                 aura1_color: "transparent",
                 aura1_radius: .05,
+                aura1_color: a1c,
                 aura2_color: "transparent",
                 aura2_radius: 0,
                 showplayers_bar1: false,
@@ -1771,7 +1790,6 @@ log("Cover: " + cover)
                 })
             }
         })
-        ModelArray[msg.selected[0]._id].token.set("aura1_color","#00ff00");
         sendChat("","Unit Created");
     }
 
