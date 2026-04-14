@@ -1997,7 +1997,10 @@ line = courageTip //modify this
                 if (unitLeader.token.get("aura1_color") === "#ff0000") {
                     outputCard.body.push("It loses another Strength Point");
                     unit.Damage(1);
-                } 
+                } else {
+                    outputCard.body.push("The Unit is Suppressed");
+                    unitLeader.token.set("aura1_color","#ff0000");
+                }
                 outputCard.body.push("The Unit must immediately Retreat");
                 return false;
             } else {
