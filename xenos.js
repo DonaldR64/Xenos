@@ -1906,6 +1906,7 @@ log("Cover: " + cover)
         let Tag = msg.content.split(";");
         let id = Tag[1];
         let order = Tag[2]; //Move, Shoot, Attack, others, options set in abilities
+        let override = Tag[3]; //if has target different than ability
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
