@@ -742,14 +742,11 @@ const XR = (() => {
     }
 
     class Unit {
-        constructor(mID,uID) {
+        constructor(mID,uID = stringGen()) {
             let refModel = ModelArray[mID];
             if (!refModel) {refModel = new Model(mID)};
             this.faction = refModel.faction;
             this.player = refModel.player;
-            if (!uID) {
-                uID = stringGen();
-            }
             refModel.unitID = uID;
             this.id = uID;
             this.tokenIDs = [mID];
@@ -770,6 +767,42 @@ const XR = (() => {
                 }
             }
         }
+
+        Distance(id) {
+            //determine if unitid or modelid
+            let model2 = ModelArray[id];
+            let unit2 = UnitArray[id];
+            let closestDistance = Infinity;
+            if (model2 && !unit2) {
+                _.each(this.tokenIDs,tokenID => {
+                    let model = ModelArray[tokenID];
+                    let dist = Model.Distance(model,model2);
+                    if (dist < closestDistance) {
+                        closestDistance = dist;
+                    }
+                })
+            } else if (!model2 && unit2) {
+                _.each(this.tokenIDs,tokenID => {
+                    let model = ModelArray[tokenID];
+                    _.each(unit2.tokenIDs,tokenID2 => {
+                        let model2 = ModelArray[tokenID2];
+                        let dist = Model.Distance(model,model2);
+                        if (dist < closestDistance) {
+                            closestDistance = dist;
+                        }
+                    })
+                })
+            } else {
+                sendChat("","Error in Unit Distance Routine");
+                closestDistance = 1;
+            }
+            return closestDistance;
+        }
+
+//when unit destroyed, update detachment points
+
+
+
 
 
     }
@@ -1505,11 +1538,14 @@ log(hex)
             players: {},
             factions: ["",""],
             unitNum: [0,0],
+            unitInfo: {},
             lines: [],
             turn: 0,
             phase: "Deployment",
             activePlayer: 0,
             firstPlayer: 0,
+            commanderID: ["",""],
+            gamePoints: [0,0], //eg 24 points
         }
         BuildMap();
         sendChat("","Cleared State/Arrays");
@@ -1743,10 +1779,13 @@ log("Cover: " + cover)
             sendChat("","No Token Selected");
             return;
         };
+        let Tag = msg.content.split(";");
+        let unitPoints = Tag[1];
 
         let unit = new Unit(msg.selected[0]._id);
         state.XR.unitNum[unit.player] += 1;
         unit.symbol = "status_" + UnitMarkers[state.XR.unitNum] || "status_brown";
+        let unitStrength = 0;
 
         let number = 1;
         _.each(msg.selected,e => {
@@ -1789,9 +1828,28 @@ log("Cover: " + cover)
                     bar1_max: model.wounds,
                 })
             }
+            unitStrength += model.wounds;
         })
+        let info = {
+            strength: unitStrength,
+            points: unitPoints,
+        }
+        state.XR.unitInfo[unit.id] = info;
         sendChat("","Unit Created");
     }
+
+    const IdentifyCommander = (msg) => {
+        if (!msg.selected) {
+            sendChat("","No Token Selected");
+            return;
+        };
+        let model = ModelArray[msg.selected[0]._id];
+        state.XR.commanderID[model.player] = model.id;
+        model.token.set("status_flag",true);
+        sendChat("","Commander Set");
+    }
+
+
 
     const ActivateUnit = (msg) => {
         let Tag = msg.content.split(";");
@@ -1816,9 +1874,93 @@ log("Cover: " + cover)
     }
 
 
+    const RallyUnit = (msg) => {
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let model = ModelArray[id];
+        let unit = UnitArray[model.unitID];
+        let errorMsg = [];
+        SetupCard(unit.name,"Rally",unit.faction);
+        if (model.token.get("aura1_color") !== "#ff0000") {
+            errorMsg.push("Unit is not Suppressed");
+        }
+        let result = CourageTest(unit);
+        outputCard.body.push(result.text);
+        if (result.result === true) {
+            model.token.set("aura1_color","#000000");
+        } 
+        PrintCard();
+    }
+
+    const CourageTest = (unit,casualties = 0) => {
+        let currentStrength = 0;
+        let inCover = 0;
+        let target = ModelArray[unit.leaderID].courage;
+        let courageTip = "Unit Courage: " + target;
+        _.each(unit.tokenIDs,tokenID => {
+            let model = ModelArray[tokenID];
+            currentStrength += model.token.get("bar1_value");
+            if (HexMap[model.hexLabel].cover > 0) {inCover++};
+        })
+        let dice = (currentStrength/state.XR.unitInfo[unit.id].strength > 0.5) ? 2:1;
+        courageTip += "<br>Dice: " + dice;
+        if (dice === 1) {courageTip += " [Unit Half Strength]"};
+        let mods = 0;
+        //bonuses
+        if (inCover >= unit.tokenIDs.length/2) {
+            mods ++;
+            courageTip += "<br>+1 for Unit in Cover";
+        }
+        let commander = ModelArray[unit.commanderID];
+        if (commander) {
+            let distance = Unit.Distance(commander,unit);
+            if (distance <= 12) {
+                mods++;
+                courageTip += "<br>+1 for Commander in 12 hexes";
+            }
+        }
+        //penalties
+        if (casualties > 0) {
+            mods -= casualties;
+            courageTip += "<br>Casualties: -" + casualties; 
+        }
+        let detachPoints = 0;
+        _.each(UnitArray,unit2 => {
+            if (unit2.player === unit.player) {
+                detachPoints += state.XR.unitInfo[unit2.id].points;
+            }
+        })
+        if (detachPoints <= state.XR.gamePoints[unit.player]/2) {
+            mods -= 1;
+            courageTip += "<br>-1 as Detachment Casualties";
+        }
+
+        let rolls = [];
+        let total = 0;
+        for (let i=0;i<dice;i++) {
+            let roll = randomInteger(6);
+            rolls.push(roll);
+            total += roll;
+        }
+        total += mods;
+
+        //display rolls with tip
+
+
+        if (total >= target) {
 
 
 
+
+        }
+
+
+
+
+
+
+
+    }
 
 
 
