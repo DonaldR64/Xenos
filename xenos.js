@@ -2133,8 +2133,7 @@ log("Cover: " + cover)
         }
         outputCard.body.push(line);
         ModelArray[unit.leaderID].token.set(SM.back,false);
-
-
+        
         if (total >= target) {
             line = '[Success: ](#" class="showtip" title="' + tip + ')';
             return true;
