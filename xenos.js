@@ -1436,10 +1436,7 @@ const XR = (() => {
             outputCard.body.push("Start with Rallying Suppressed Units");
             outputCard.body.push("Then activate any units with Wild Charge active");
             outputCard.body.push("Finally can activate remaining Units");
-            //check for wild charge
-            WildCheck(faction);
-            //set auras for all other units
-            SetAuras(faction);
+            SetAuras(faction); //set to green or red, those that arent yellow/suppressed
 
 
 
@@ -1455,31 +1452,38 @@ const XR = (() => {
 
     }
  
-    const WildCheck = (faction) => {
-        //check if unit has wild charge and in range
+    const SetAuras = (faction) => {
         _.each(UnitArray,unit => {
             let leader = ModelArray[unit.leaderID];
-            if (unit.faction === faction && unit.wild === true && leader.token.get("aura1_color") !== "#ffff00") {
-                _.each(UnitArray,unit2 => {
-                    if (unit2.faction !== unit.faction) {
-                        let dist = unit.Distance(unit2.id);
-                        if (dist <= leader.moveRate) {
-                            //now need to see LOS and move rates on hexes crossed to see if actually has move
-
-
-
-                        }
-                    }
-                })
+            if (unit.faction === faction && leader.token.get("aura1_color") !== "#ffff00") {
+                let wildFlag = false;
+                if (unit.wild === true) {
+                    wildFlag = WildCheck(unit);
+                }
+                if (wildFlag === false) {
+                    leader.token.set("aura1_color","#00ff00");
+                }
             }
         })
     }
+ 
+    const WildCheck = (unit) => {
+        let result = false;
+        _.each(UnitArray,unit2 => {
+            if (unit2.faction !== unit.faction) {
+                let dist = unit.Distance(unit2.id);
+                if (dist <= leader.moveRate) {
+                    //now need to see LOS and move rates on hexes crossed to see if actually has move
+                    //if does, change aura to red, and result to true
+
+
+
+                }
+            }
+        })
+        return result;
+    }
     
-
-
-
-
-
 
 
 
