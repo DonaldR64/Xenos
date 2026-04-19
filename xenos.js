@@ -747,6 +747,7 @@ const XR = (() => {
             if (!refModel) {refModel = new Model(mID)};
             this.faction = refModel.faction;
             this.player = refModel.player;
+            this.wild = (refModel.special.includes("Wild Charge")) ? true:false;
             refModel.unitID = uID;
             this.id = uID;
             this.tokenIDs = [mID];
@@ -761,6 +762,9 @@ const XR = (() => {
             if (this.tokenIDs.includes(mID) === false) {
                 this.tokenIDs.push(mID);
                 let model = ModelArray[mID];
+                if (model.special.includes("Wild Charge")) {
+                    this.wild = true;
+                }
                 model.unitID = this.id;
                 if (model.rank !== "Trooper") {
                     this.leaderID = mID;
@@ -798,6 +802,10 @@ const XR = (() => {
             }
             return closestDistance;
         }
+
+
+
+
 
         Damage(damage) {
             //if a single token then can apply damage, possibly destroy unit
@@ -1385,15 +1393,98 @@ const XR = (() => {
 
 
     const SetupGame = (msg) => {
-        
-
-
+        //!Setup;?{Game Points|0}
+        let Tag = msg.content.split(";");
+        state.XR.gamePoints = Tag[1];
 
     }
 
+    const NextTurn = () => {
+        //is really next players turn
+        let turn = state.XR.turn;
+        if (turn === 0) {
+            turn = 1;
+            SetupCard("Turn 1","","Neutral");
+            outputCard.body.push("If appropriate, roll for Attacker/Defender");
+            outputCard.body.push("Setup and Start according to Scenario");
+            //no need to check for rally 
+            //first player will be set once someone activates a unit
 
+        } else {
+            //check if prior player has any unactivated units
+            let flag = false;
+            _.each(UnitArray,unit => {
+                if (unit.faction === state.XR.activePlayer) {
+                    let model = ModelArray[unit.leaderID];
+                    if (model.token.get("aura1_color") === "#00ff00") {
+                        flag = true;
+                    }
+                }
+            })
+            if (flag === true) {
+                SetupCard("Turn Not Over","","Neutral");
+                outputCard.body.push("Player has units that have not activated");
+                PrintCard();
+                return;
+            }
+            if (state.XR.activePlayer !== state.XR.firstPlayer) {
+                turn++
+            } 
+            state.XR.activePlayer = (state.XR.activePlayer === 0) ? 1:0;
+            let faction = state.XR.factions[state.XR.activePlayer];
+            SetupCard(faction,"Turn " + turn,faction);
+            outputCard.body.push("Start with Rallying Suppressed Units");
+            outputCard.body.push("Then activate any units with Wild Charge active");
+            outputCard.body.push("Finally can activate remaining Units");
+            //check for wild charge
+            WildCheck(faction);
+            //set auras for all other units
+            SetAuras(faction);
+
+
+
+
+
+
+
+        }
+
+        state.XR.turn = turn;
+        PrintCard();
+
+
+    }
  
- 
+    const WildCheck = (faction) => {
+        //check if unit has wild charge and in range
+        _.each(UnitArray,unit => {
+            let leader = ModelArray[unit.leaderID];
+            if (unit.faction === faction && unit.wild === true && leader.token.get("aura1_color") !== "#ffff00") {
+                _.each(UnitArray,unit2 => {
+                    if (unit2.faction !== unit.faction) {
+                        let dist = unit.Distance(unit2.id);
+                        if (dist <= leader.moveRate) {
+                            //now need to see LOS and move rates on hexes crossed to see if actually has move
+
+
+
+                        }
+                    }
+                })
+            }
+        })
+    }
+    
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1592,11 +1683,10 @@ log(hex)
             unitInfo: {},
             lines: [],
             turn: 0,
-            phase: "Deployment",
-            activePlayer: 0,
-            firstPlayer: 0,
+            activePlayer: -1,
+            firstPlayer: -1,
             commanderID: ["",""],
-            gamePoints: [0,0], //eg 24 points
+            gamePoints: 0, //eg 24 points
         }
         BuildMap();
         sendChat("","Cleared State/Arrays");
@@ -1914,7 +2004,19 @@ log("Cover: " + cover)
         if (model.token.get("aura1_color") !== "#00ff00") {
             errorMsg.push("Unit has already Activated this turn");
         }
+
+
+
         if (ErrorMsg(errorMsg) === true) {return};
+
+        if (state.XR.firstPlayer === -1) {
+            state.XR.firstPlayer = unit.player;
+        }
+        if (state.XR.activePlayer !== unit.player) {
+            state.XR.activePlayer = unit.player;
+        }
+
+
 
         if (order === "Move") {
             let result = ActivationTest(unit,"Move",2,0);
@@ -2208,6 +2310,9 @@ log("Cover: " + cover)
 
             case '!SetupGame':
                 SetupGame(msg);
+                break;
+            case '!NextTurn':
+                NextTurn();
                 break;
 
             case '!TokenInfo':
