@@ -112,7 +112,7 @@ const XR = (() => {
         supp: "status_yellow",
         unavail: "status_oneshot::5503748",
         gtg: "status_Disadvantage-or-Down::2006464",
-
+        back: "status_green",
 
 
 
@@ -1433,9 +1433,9 @@ const XR = (() => {
             state.XR.activePlayer = (state.XR.activePlayer === 0) ? 1:0;
             let faction = state.XR.factions[state.XR.activePlayer];
             SetupCard(faction,"Turn " + turn,faction);
-            outputCard.body.push("Start with Rallying Suppressed Units");
-            outputCard.body.push("Then activate any units with Wild Charge active");
-            outputCard.body.push("Finally can activate remaining Units");
+            outputCard.body.push("Start with Rallying Suppressed Units (Yellow)");
+            outputCard.body.push("Then activate any units with Wild Charge active (Red)");
+            outputCard.body.push("Finally can activate remaining Units (Green)");
             SetAuras(faction); //set to green or red, those that arent yellow/suppressed
 
 
@@ -2078,6 +2078,11 @@ log("Cover: " + cover)
         outputCard.body.push(result.text);
         if (result === true) {
             outputCard.body.push("Unit has Rallied");
+            if (model.special.includes("Back into the Fray")) {
+                model.token.set(SM.back,true);
+                outputCard.body.push("The Unit has Back into the Fray");
+                outputCard.body.push("It can Activate but must take an Activation Test even if Auto");
+            }
         } 
         if (result !== "Rout") {
             unit.Rally();
@@ -2109,6 +2114,7 @@ log("Cover: " + cover)
 
 
     const ActivationTest = (unit,stat,dice,pos = 0) => {
+        if (ModelArray[unit.leaderID].token.get(SM.back) === true) {pos = 1}; //back into fray
         let target = unit[stat][pos];
         let targetText = target + "+";
         if (target === 1) {targetText = "Auto"}
@@ -2126,6 +2132,9 @@ log("Cover: " + cover)
             }
         }
         outputCard.body.push(line);
+        ModelArray[unit.leaderID].token.set(SM.back,false);
+
+
         if (total >= target) {
             line = '[Success: ](#" class="showtip" title="' + tip + ')';
             return true;
