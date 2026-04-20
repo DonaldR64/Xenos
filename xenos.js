@@ -72,7 +72,7 @@ const XR = (() => {
     }
 
     let ModelArray = {};
-    let PlatoonArray = {};
+    let UnitArray = {};
     //let CompanyArray = {}; // ? if have multiple detachments then this ?
     
 
@@ -619,7 +619,7 @@ const XR = (() => {
             this.terrain = "Open";
             this.offboard = false;
             this.cover = 0;
-            this.move = 0;
+            this.move = 1;
             this.los = true;
             this.edges = {};
             _.each(DIRECTIONS,a => {
@@ -1517,20 +1517,22 @@ const XR = (() => {
 
 
     const aStar = (model1,model2) => {
+log("In aStar")
+        let startTime = Date.now();
+log(model1.name + ": " + model1.unitID)
         let closest = model1.ClosestHex(model2);
         let startHex = HexMap[closest.hexLabel1];
         let endHex = HexMap[closest.hexLabel2];
 log("Start: " + closest.hexLabel1)
 log("End: " + closest.hexLabel2)
-        let move = unit.moveRate;
+        let move = model1.moveRate;
 log("Move: " + move)
         let distance = startHex.cube.distance(endHex.cube);
-log("Distance: " + distance)
         let nodes = 1;
         let explored = [];
         let frontier = [{
             label: startHex.label,
-            cost: 0,
+            cost: startHex.move,
             estimate: distance,
         }]
 
@@ -1546,7 +1548,7 @@ log("Node: " + node.label)
             nodes++;
             explored.push(node); //add this node to explored paths
             //if this node reaches goal, end loop
-            if (node.label === endHexLabel) {
+            if (node.label === endHex.label) {
                 break;
             }
             //generate possible next steps
@@ -1560,15 +1562,19 @@ log("Node: " + node.label)
                 let stepHex = HexMap[stepHexLabel];
                 if (!stepHex) {continue};
                 if (stepHex.offboard === true) {continue};
-                let cost = stepHex.moveCosts[unit.moveType];
+                let cost = stepHex.move;
 
                 //check for units adjacent to the hex, cant move adjacent
                 let surrounding = stepCube.neighbours();
                 for (let i=0;i<surrounding.length;i++) {
                     let checkHex = HexMap[surrounding[i].label()];
                     if (checkHex.tokenIDs.length > 0) {
-                        cost = 100;
-                        break;
+                        let model3 = ModelArray[checkHex.tokenIDs[0]];
+log(model3.name + ": " + model3.unitID)
+                        if (model3.unitID !== model1.unitID) {
+                            cost = 100;
+                            break;
+                        }
                     }
                 }
                 if (model1.special.includes("Open Order") && cost === 2) {
@@ -1614,14 +1620,21 @@ log("StepHex: " + stepHexLabel + " Added, Cost: " + cost)
 log("Explored")
 log(explored)
             let final = explored.length - 1;
-            for (let i=1;i<explored.length;i++) {
+            for (let i=0;i<explored.length;i++) {
                 totalCost += explored[i].cost;
             }
         } else {
             totalCost = 100;
         }
 
+
+        let elapsed = Date.now()-startTime;
+        log("aStar done in " + elapsed/1000 + " seconds");
+
         return totalCost;
+
+
+
     }
 
 
@@ -2370,11 +2383,12 @@ log("Cover: " + cover)
 
 
     const Test = (msg) => {
-        let Tag =  msg.split(";");
+        let Tag =  msg.content.split(";");
         let model1 = ModelArray[Tag[1]];
         let model2 = ModelArray[Tag[2]];
         let result = aStar(model1,model2);
-        sendChat("",result);
+log(result)
+        sendChat("","Done");
     }
 
 
