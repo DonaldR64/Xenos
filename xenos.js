@@ -125,7 +125,7 @@ const XR = (() => {
 
 
     //height is height of terrain element
-    //move -> 0 = open, 1 = difficult, 2 = impassable to ground
+    //move -> 1 = open, 2 = difficult, 50 = obstacle, 100 = impassable
     //cover for  fire - 0 = None, 1 = Light, 2 = Heavy
     //los -> true, false or Woods
 
@@ -142,7 +142,7 @@ const XR = (() => {
 
 
     const TerrainInfo = {
-        "Woods": {name: "Woods",height: 2, los: "Woods", move: 1, cover: 1},
+        "Woods": {name: "Woods",height: 2, los: "Woods", move: 2, cover: 1},
 
 
 
@@ -732,7 +732,27 @@ const XR = (() => {
             return distance;
         }
 
-
+        ClosestHex = (model2) => {
+            let closest = Infinity;
+            let c1,c2
+            let cubes1 = HexMap[this.hexLabel].cube.radius(this.size);
+            let cubes2 = HexMap[model2.hexLabel].cube.radius(model2.size);
+            _.each(cubes1,cube1 => {
+                _.each(cubes2,cube2 => {
+                    let d = cube1.distance(cube2);
+                    if (d < closest) {
+                        closest = d;
+                        c1 = cube1;
+                        c2 = cube2;
+                    }
+                })
+            })
+            let result = {
+                hexLabel1: c1.label(),
+                hexLabel2: c2.label(),
+            }
+            return result;
+        }
 
 
 
@@ -1480,6 +1500,8 @@ const XR = (() => {
                         let model1 = ModelArray[unit.tokenIDs[i]];
                         for (let j=0;j<unit2.tokenIDs.length;j++) {
                             let model2 = ModelArray[unit2.tokenIDs[j]];
+                            let dist2 = model1.Distance(model2);
+                            if (dist2 > model1.moveRate) {continue};
                             let losResult = LOS(model1,model2);
                             if (losResult.los === false) {continue};
                             let moveCost = aStar(model1,model2);
@@ -1493,15 +1515,116 @@ const XR = (() => {
     }
     
 
+
     const aStar = (model1,model2) => {
-        let cost = 0;
-        
+        let closest = model1.ClosestHex(model2);
+        let startHex = HexMap[closest.hexLabel1];
+        let endHex = HexMap[closest.hexLabel2];
+log("Start: " + closest.hexLabel1)
+log("End: " + closest.hexLabel2)
+        let move = unit.moveRate;
+log("Move: " + move)
+        let distance = startHex.cube.distance(endHex.cube);
+log("Distance: " + distance)
+        let nodes = 1;
+        let explored = [];
+        let frontier = [{
+            label: startHex.label,
+            cost: 0,
+            estimate: distance,
+        }]
 
+        while (frontier.length > 0) {
+            //sort paths in frontier by cost,lowest cost first
+            //choose lowest cost path from the frontier
+            //if more than one, choose one with highest cost       
+            frontier.sort(function(a,b) {
+                return a.estimate - b.estimate || b.cost - a.cost; //2nd part used if estimates are same
+            })
+            let node = frontier.shift();
+log("Node: " + node.label)
+            nodes++;
+            explored.push(node); //add this node to explored paths
+            //if this node reaches goal, end loop
+            if (node.label === endHexLabel) {
+                break;
+            }
+            //generate possible next steps
+            let next = HexMap[node.label].cube.neighbours();
+            //for each possible next step
+            for (let i=0;i<next.length;i++) {
+                //calculate the cost of the next step 
+                //by adding the step's cost to the node's cost
+                let stepCube = next[i];
+                let stepHexLabel = stepCube.label();
+                let stepHex = HexMap[stepHexLabel];
+                if (!stepHex) {continue};
+                if (stepHex.offboard === true) {continue};
+                let cost = stepHex.moveCosts[unit.moveType];
 
+                //check for units adjacent to the hex, cant move adjacent
+                let surrounding = stepCube.neighbours();
+                for (let i=0;i<surrounding.length;i++) {
+                    let checkHex = HexMap[surrounding[i].label()];
+                    if (checkHex.tokenIDs.length > 0) {
+                        cost = 100;
+                        break;
+                    }
+                }
+                if (model1.special.includes("Open Order") && cost === 2) {
+                    cost = 1;
+                }
+                if (model1.special.includes("Skimmer") && cost < 100) {
+                    cost = 1;
+                }
+                if (model1.special.includes("Flyer")) {
+                    cost = 1;
+                }
 
+                //check if this step has already been explored
+                let isExplored = (explored.find(e => {
+                    return e.label === stepHexLabel
+                }));
+                //avoid repeated nodes during the calcualtion of neighbours
+                let isFrontier = (frontier.find(e => {
+                    return e.label === stepHexLabel
+                }));
+                //if this step has not been explored
+                if (!isExplored && !isFrontier) {
+log("StepHex: " + stepHexLabel + " Added, Cost: " + cost)
+                    let est = cost + stepHex.cube.distance(endHex.cube);
+                    //add the step to the frontier
+                    frontier.push({
+                        label: stepHexLabel,
+                        cost: cost,
+                        estimate: est,
+                    })
+                }
 
+            }
+        }
 
+        //if there are no paths left to explore or hit end hex
+        let finalHexLabel = startHex.label;
+        let totalCost = 0;
+        if (explored.length > 0) {
+            explored.sort((a,b) => {
+                return b.estimate - a.estimate || a.cost - b.cost;
+            })
+log("Explored")
+log(explored)
+            let final = explored.length - 1;
+            for (let i=1;i<explored.length;i++) {
+                totalCost += explored[i].cost;
+            }
+        } else {
+            totalCost = 100;
+        }
+
+        return totalCost;
     }
+
+
 
 
 
@@ -2246,7 +2369,13 @@ log("Cover: " + cover)
     }
 
 
-
+    const Test = (msg) => {
+        let Tag =  msg.split(";");
+        let model1 = ModelArray[Tag[1]];
+        let model2 = ModelArray[Tag[2]];
+        let result = aStar(model1,model2);
+        sendChat("",result);
+    }
 
 
 
@@ -2348,8 +2477,9 @@ log("Cover: " + cover)
             case '!CheckLOS':
                 CheckLOS(msg);
                 break;
-
-
+            case '!Test':
+                Test(msg);
+                break;
             case '!Roll':
                 RollDice(msg);
                 break;

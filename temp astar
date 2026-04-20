@@ -1,0 +1,108 @@
+const aStar = (model1,model2) => {
+
+//notes: Open Order = no reduction in cost for rough
+//Flying, Skimmer - terrain cost is 1
+        let closest = model1.ClosestHex(model2);
+        let startHex = HexMap[closest.hexLabel1];
+        let endHex = HexMap[closest.hexLabel2];
+log("Start: " + closest.hexLabel1)
+log("End: " + closest.hexLabel2)
+        let move = unit.moveRate;
+log("Move: " + move)
+        let distance = startHex.cube.distance(endHex.cube);
+log("Distance: " + distance)
+        let nodes = 1;
+        let explored = [];
+        let frontier = [{
+            label: startHex.label,
+            cost: 0,
+            estimate: distance,
+        }]
+
+        while (frontier.length > 0) {
+            //sort paths in frontier by cost,lowest cost first
+            //choose lowest cost path from the frontier
+            //if more than one, choose one with highest cost       
+            frontier.sort(function(a,b) {
+                return a.estimate - b.estimate || b.cost - a.cost; //2nd part used if estimates are same
+            })
+            let node = frontier.shift();
+log("Node: " + node.label)
+            nodes++;
+            explored.push(node); //add this node to explored paths
+            //if this node reaches goal, end loop
+            if (node.label === endHexLabel) {
+                break;
+            }
+            //generate possible next steps
+            let next = HexMap[node.label].cube.neighbours();
+            //for each possible next step
+            for (let i=0;i<next.length;i++) {
+                //calculate the cost of the next step 
+                //by adding the step's cost to the node's cost
+                let stepCube = next[i];
+                let stepHexLabel = stepCube.label();
+                let stepHex = HexMap[stepHexLabel];
+                if (!stepHex) {continue};
+                if (stepHex.offboard === true) {continue};
+                let cost = stepHex.moveCosts[unit.moveType];
+
+                //check for units adjacent to the hex, cant move adjacent
+                let surrounding = stepCube.neighbours();
+                for (let i=0;i<surrounding.length;i++) {
+                    let checkHex = HexMap[surrounding[i].label()];
+                    if (checkHex.tokenIDs.length > 0) {
+                        cost = 100;
+                        break;
+                    }
+                }
+
+                if (model1.special.includes("Skimmer") && cost < 100) {
+                    cost = 1;
+                }
+                if (model1.special.includes("Flyer")) {
+                    cost = 1;
+                }
+
+                //check if this step has already been explored
+                let isExplored = (explored.find(e => {
+                    return e.label === stepHexLabel
+                }));
+                //avoid repeated nodes during the calcualtion of neighbours
+                let isFrontier = (frontier.find(e => {
+                    return e.label === stepHexLabel
+                }));
+                //if this step has not been explored
+                if (!isExplored && !isFrontier) {
+log("StepHex: " + stepHexLabel + " Added, Cost: " + cost)
+                    let est = cost + stepHex.cube.distance(endHex.cube);
+                    //add the step to the frontier
+                    frontier.push({
+                        label: stepHexLabel,
+                        cost: cost,
+                        estimate: est,
+                    })
+                }
+
+            }
+        }
+
+        //if there are no paths left to explore or hit end hex
+        let finalHexLabel = startHex.label;
+        let totalCost = 0;
+        if (explored.length > 0) {
+            explored.sort((a,b) => {
+                return b.estimate - a.estimate || a.cost - b.cost;
+            })
+log("Explored")
+log(explored)
+            let final = explored.length - 1;
+            for (let i=1;i<explored.length;i++) {
+                totalCost += explored[i].cost;
+            }
+        } else {
+            totalCost = 100;
+        }
+
+        return totalCost;
+    }
