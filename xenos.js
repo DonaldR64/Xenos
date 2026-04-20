@@ -2171,28 +2171,48 @@ log("Cover: " + cover)
             state.XR.activePlayer = unit.player;
         }
 
+        let pos = 0; //alter for thing like back in the fray
 
-
-        if (order === "Move") {
-            let result = ActivationTest(unit,"Move",2,0);
-            if (result === true) {
-                outputCard.body.push("Unit can complete its Movement, it has a movement rate of " + moveRate);
-            } else {
-                outputCard.body.push("The Turn is over")
-            }
-        } else if (order === "Go to Ground") {
-            let result = ActivationTest(unit,"Move",2,0);
-            if (result === true) {
-                outputCard.body.push("Unit goes to Ground");
-                model.token.set(SM.gtg,true);
-            } else {
-                outputCard.body.push("The Turn is over")
-            }
-        } else {
-
-
-
+        let orders = {
+            Move: {
+                stat: "Move",
+                target: model.moveOn[pos],
+                phrase: "Unit can complete its Movement, it has a movement rate of " + model.moveRate,
+                marker: "",
+            },
+            "Go to Ground": {
+                stat: "Move",
+                target: model.moveOn[pos],
+                phrase: "Unit Goes to Ground",
+                marker: SM.gtg,
+            },
+            Attack: {
+                stat: "Attack",
+                target: model.attackOn[pos],
+                phrase: "Unit can complete its Charge, it has a movement rate of " + model.moveRate,
+                marker: "",
+            },
+            Shoot: {
+                stat: "Shoot",
+                target: model.shootOn[pos],
+                phrase: "Unit may Shoot",
+                marker: "",
+            },
+            Skirmish: {
+                stat: "Fixed 7",
+                target: 7,
+                phrase: "Unit may Move up to 1/2 (" + Math.floor(model.moveRate/2) + ") and Shoot, in either order",
+                marker: SM.skirmish,
+            },
+            "Move and Shoot": {
+                stat: "Move",
+                target: model.moveOn[pos],
+                phrase: "Unit may Move (" + model.moveRate+ ") and Shoot, in either order",
+                marker: "",
+            },
         }
+
+        let result = ActivationTest(model,orders[order].stat,orders[order].target,2); 
 
 
 
@@ -2248,15 +2268,15 @@ log("Cover: " + cover)
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
-        SetupCard(unit.name,"Wild Charge",unit.faction);
+        SetupCard(model.name,"Wild Charge",model.faction);
         if (model.token.get("aura1_color") !== "#ff0000") {
             errorMsg.push("Unit is not Subject to Wild Charge");
         }
         if (ErrorMsg(errorMsg) === true) {return};
-        let result = ActivationTest(unit,"Attack",2);
+        let result = ActivationTest(model,"Attack",model.attackOn[0],2);
         outputCard.body.push(result.text);
         if (result === true) {
-            outputCard.body.push("Unit has may conduct an Attack against an enemy unit in charge range");
+            outputCard.body.push("Unit must conduct an Attack against an enemy unit in charge range");
         } else {
             outputCard.body.push("Unit's turn is done.")
         }
@@ -2264,12 +2284,11 @@ log("Cover: " + cover)
     }
 
 
-    const ActivationTest = (unit,stat,dice,pos = 0) => {
-        if (ModelArray[unit.leaderID].token.get(SM.back) === true) {pos = 1}; //back into fray
-        let target = unit[stat][pos];
+    const ActivationTest = (model,statName,target,dice,pos = 0) => {
+        if (model.token.get(SM.back) === true) {pos = 1}; //back into fray
         let targetText = target + "+";
         if (target === 1) {targetText = "Auto"}
-        let tip = "Stat: " + stat + ": " + targetText;
+        let tip = "Stat: " + statName + ": " + targetText;
         tip += "<br>Dice: " + dice;
 
         let line = "Rolls: ";
@@ -2277,19 +2296,21 @@ log("Cover: " + cover)
         for (let i=0;i<dice;i++) {
             let roll = randomInteger(6);
             total += roll;
-            line += DisplayDice(roll,Factions[unit.faction].dice,24);
+            line += DisplayDice(roll,Factions[model.faction].dice,24);
             if (i > 0) {
                 line += " ";
             }
         }
         outputCard.body.push(line);
-        ModelArray[unit.leaderID].token.set(SM.back,false);
+        model.token.set(SM.back,false);
 
         if (total >= target) {
             line = '[Success: ](#" class="showtip" title="' + tip + ')';
+            outputCard.body.push(line);
             return true;
         } else {
             line = '[Failure: ](#" class="showtip" title="' + tip + ')';
+            outputCard.body.push(line);
             return false;
         }
     }
