@@ -1460,7 +1460,9 @@ const XR = (() => {
                 if (unit.wild === true) {
                     wildFlag = WildCheck(unit);
                 }
-                if (wildFlag === false) {
+                if (wildFlag === true) {
+                    leader.token.set("aura1_color","#ff0000");
+                } else {
                     leader.token.set("aura1_color","#00ff00");
                 }
             }
@@ -1493,7 +1495,7 @@ const XR = (() => {
 
     const aStar = (model1,model2) => {
         let cost = 0;
-        
+
 
 
 
