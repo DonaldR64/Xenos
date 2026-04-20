@@ -1468,24 +1468,38 @@ const XR = (() => {
     }
  
     const WildCheck = (unit) => {
-        let result = false;
         _.each(UnitArray,unit2 => {
             if (unit2.faction !== unit.faction) {
-                let dist = unit.Distance(unit2.id);
+                let dist = unit.Distance(unit2.id); //closest distance
                 if (dist <= leader.moveRate) {
                     //now need to see LOS and move rates on hexes crossed to see if actually has move
                     //if does, change aura to red, and result to true
-
-
-
+                    for (let i=0;i<unit.tokenIDs.length;i++) {
+                        let model1 = ModelArray[unit.tokenIDs[i]];
+                        for (let j=0;j<unit2.tokenIDs.length;j++) {
+                            let model2 = ModelArray[unit2.tokenIDs[j]];
+                            let losResult = LOS(model1,model2);
+                            if (losResult.los === false) {continue};
+                            let moveCost = aStar(model1,model2);
+                            if (moveCost <= model1.moveRate) {return true};
+                        }
+                    }
                 }
             }
         })
-        return result;
+        return false;
     }
     
 
+    const aStar = (model1,model2) => {
+        let cost = 0;
+        
 
+
+
+
+
+    }
 
 
 
@@ -1823,7 +1837,6 @@ log(hex)
         let targetHex = HexMap[target.hexLabel];
         let distance = shooter.Distance(target);
 
-
         //firing arc on weapon
         let angle = TargetAngle(shooter,target);
         let angleT = TargetAngle(target,shooter);
@@ -2133,7 +2146,7 @@ log("Cover: " + cover)
         }
         outputCard.body.push(line);
         ModelArray[unit.leaderID].token.set(SM.back,false);
-        
+
         if (total >= target) {
             line = '[Success: ](#" class="showtip" title="' + tip + ')';
             return true;
