@@ -2247,8 +2247,7 @@ log("Cover: " + cover)
 
 
     const RallyUnit = (msg) => {
-        let Tag = msg.content.split(";");
-        let id = Tag[1];
+        let id = msg.selected[0]._id;
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
@@ -2508,7 +2507,9 @@ log(result)
             case '!Activate':
                 ActivateUnit(msg);
                 break;
-
+            case '!Rally':
+                RallyUnit(msg);
+                break;
 
             case '!SetupGame':
                 SetupGame(msg);
