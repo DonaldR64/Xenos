@@ -2149,9 +2149,8 @@ log("Cover: " + cover)
 
     const ActivateUnit = (msg) => {
         let Tag = msg.content.split(";");
-        let id = Tag[1];
-        let order = Tag[2]; //Move, Shoot, Attack, others, options set in abilities
-        let override = Tag[3]; //if has target different than ability
+        let id = msg.selected[0]._id;
+        let order = Tag[1]; //Move, Shoot, Attack, others, options set in abilities
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
@@ -2160,7 +2159,7 @@ log("Cover: " + cover)
             errorMsg.push("Unit has already Activated this turn");
         }
 
-
+        SetupCard("Activation",model.name,model.faction);
 
         if (ErrorMsg(errorMsg) === true) {return};
 
@@ -2172,6 +2171,7 @@ log("Cover: " + cover)
         }
 
         let pos = 0; //alter for thing like back in the fray
+        if (model.token.get(SM.back) === true) {pos = 1}; //back into fray
 
         let orders = {
             Move: {
@@ -2212,11 +2212,23 @@ log("Cover: " + cover)
             },
         }
 
-        let result = ActivationTest(model,orders[order].stat,orders[order].target,2); 
+        let result = ActivationTest(model,orders[order].stat,orders[order].target,2,pos); 
 
+        if (result === true) {
+            outputCard.body.push(orders[order].phrase);
+        } else {
+            outputCard.body.push("Activation Fails, Player's Turn is Over");
+            _.each(UnitArray,unit => {
+                if (unit.player === model.player) {
+                    let leader = ModelArray[unit.leaderID];
+                    if (leader.token.get("aura1_color") === "#00ff00") {
+                        leader.token.set("aura1_color","#000000");
+                    }
+                }
+            })
+        }
 
-
-
+        PrintCard();
 
 
     }
@@ -2284,8 +2296,7 @@ log("Cover: " + cover)
     }
 
 
-    const ActivationTest = (model,statName,target,dice,pos = 0) => {
-        if (model.token.get(SM.back) === true) {pos = 1}; //back into fray
+    const ActivationTest = (model,statName,target,dice) => {
         let targetText = target + "+";
         if (target === 1) {targetText = "Auto"}
         let tip = "Stat: " + statName + ": " + targetText;
