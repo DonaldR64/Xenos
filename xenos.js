@@ -86,6 +86,7 @@ const XR = (() => {
             "fontColour": "#000000",
             "borderColour": "#ff0000",
             "borderStyle": "5px groove",
+            dice: "BloodAngels",
         },
         "Orks": {
             "image": "",
@@ -94,6 +95,7 @@ const XR = (() => {
             "fontColour": "#000000",
             "borderColour": "#000000",
             "borderStyle": "5px double",
+            dice: "Orks",
         },
 
         "Neutral": {
@@ -879,8 +881,12 @@ const XR = (() => {
                 let model = ModelArray[tokenID];
                 model.token.set("tint_color","transparent");
             })
-            let leader = ModelArray[unit.leaderID];
-            leader.token.set("aura1_color","#000000");
+            let leader = ModelArray[this.leaderID];
+            if (leader.token.get(SM.back) === true) {
+                leader.token.set("aura1_color","#00ff00");
+            } else {
+                leader.token.set("aura1_color","#000000");
+            }
         }
 
 
@@ -2243,10 +2249,8 @@ log("Cover: " + cover)
         if (order !== "Go to Ground" && result !== true) {
             model.token.set(SM.gtg,false);
         }
-
+        model.token.set("aura1_color","#000000");
         PrintCard();
-
-
     }
 
     const ErrorMsg = (msgs) => {
@@ -2263,12 +2267,13 @@ log("Cover: " + cover)
 
 
     const RallyUnit = (msg) => {
-        let id = msg.selected[0]._id;
+        let id = msg.content.split(";")[1];
         let model = ModelArray[id];
         let unit = UnitArray[model.unitID];
+        let leader = ModelArray[unit.leaderID];
         let errorMsg = [];
-        SetupCard(unit.name,"Rally",unit.faction);
-        if (model.token.get("aura1_color") !== "#ffff00") {
+        SetupCard(leader.name,"Rally",leader.faction);
+        if (leader.token.get("aura1_color") !== "#ffff00") {
             errorMsg.push("Unit is not Suppressed");
         }
         if (ErrorMsg(errorMsg) === true) {return};
@@ -2276,8 +2281,8 @@ log("Cover: " + cover)
         outputCard.body.push(result.text);
         if (result === true) {
             outputCard.body.push("Unit has Rallied");
-            if (model.special.includes("Back into the Fray")) {
-                model.token.set(SM.back,true);
+            if (leader.special.includes("Back into the Fray")) {
+                leader.token.set(SM.back,true);
                 outputCard.body.push("The Unit has Back into the Fray");
                 outputCard.body.push("It can Activate but must take an Activation Test even if Auto");
             }
@@ -2314,29 +2319,22 @@ log("Cover: " + cover)
     const ActivationTest = (model,statName,target,dice) => {
         let targetText = target + "+";
         if (target === 1) {targetText = "Auto"}
-        let tip = "Stat: " + statName + ": " + targetText;
-        tip += "<br>Dice: " + dice;
-
-        let line = "Rolls: ";
+        let line = "";
         let total = 0;
         for (let i=0;i<dice;i++) {
             let roll = randomInteger(6);
             total += roll;
-            line += DisplayDice(roll,Factions[model.faction].dice,24);
-            if (i > 0) {
-                line += " ";
-            }
+            line += DisplayDice(roll,Factions[model.faction].dice,24) + " ";
         }
+        line += " vs. " + targetText + " (" + statName + ")";
         outputCard.body.push(line);
         model.token.set(SM.back,false);
 
         if (total >= target) {
-            line = '[Success: ](#" class="showtip" title="' + tip + ')';
-            outputCard.body.push(line);
+            outputCard.body.push("Success!");
             return true;
         } else {
-            line = '[Failure: ](#" class="showtip" title="' + tip + ')';
-            outputCard.body.push(line);
+            outputCard.body.push("[#ff0000]Failure![/#]");
             return false;
         }
     }
@@ -2390,26 +2388,24 @@ log("Cover: " + cover)
             courageTip += "<br>-1 as Detachment Casualties";
         }
 
-        let line = "Rolls: ";
+        let line = "";
         let total = 0;
         for (let i=0;i<dice;i++) {
             let roll = randomInteger(6);
             total += roll;
-            line += DisplayDice(roll,Factions[unit.faction].dice,24);
-            if (i > 0) {
-                line += " ";
-            }
+            line += DisplayDice(roll,Factions[unit.faction].dice,24) + " ";
         }
         total += mods;
-        //display rolls with tip
+        line += " vs. " + target + "+";
         outputCard.body.push(line);
-        line = '[Total: ](#" class="showtip" title="' + courageTip + ')';
-        outputCard.body.push(line + total);
+
+        let success = '[Success: ](#" class="showtip" title="' + courageTip + ')';
+        let failure = '[Failure: ](#" class="showtip" title="' + courageTip + ')';
         if (total >= target) {
-            outputCard.body.push("The Unit makes the Courage Test");
+            outputCard.body.push(success + "The Unit makes the Courage Test");
             return true;
         } else {
-            outputCard.body.push("[/#ff0000]The Unit fails the Courage Test[/#]")
+            outputCard.body.push(failure + "The Unit fails the Courage Test")
             if (total > 0) {
                 if (unitLeader.token.get("aura1_color") === "#ffff00") {
                     outputCard.body.push("It loses another Strength Point");
