@@ -871,6 +871,7 @@ const XR = (() => {
             })
             let leader = ModelArray[unit.leaderID];
             leader.token.set("aura1_color","#ffff00");
+            leader.token.set(SM.gtg,false);
         }
 
         Rally() {
@@ -2175,36 +2176,42 @@ log("Cover: " + cover)
 
         let orders = {
             Move: {
+                moving: true,
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit can complete its Movement, it has a movement rate of " + model.moveRate,
                 marker: "",
             },
             "Go to Ground": {
+                moving: false,
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit Goes to Ground",
                 marker: SM.gtg,
             },
             Attack: {
+                moving: true,
                 stat: "Attack",
                 target: model.attackOn[pos],
                 phrase: "Unit can complete its Charge, it has a movement rate of " + model.moveRate,
                 marker: "",
             },
             Shoot: {
+                moving: false,
                 stat: "Shoot",
                 target: model.shootOn[pos],
                 phrase: "Unit may Shoot",
                 marker: "",
             },
             Skirmish: {
+                moving: true,
                 stat: "Fixed 7",
                 target: 7,
                 phrase: "Unit may Move up to 1/2 (" + Math.floor(model.moveRate/2) + ") and Shoot, in either order",
                 marker: SM.skirmish,
             },
             "Move and Shoot": {
+                moving: true,
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit may Move (" + model.moveRate+ ") and Shoot, in either order",
@@ -2216,6 +2223,12 @@ log("Cover: " + cover)
 
         if (result === true) {
             outputCard.body.push(orders[order].phrase);
+            let except = ["Open Order","All-Terrain","Skimmer","Flyer"];
+            _.each(except,ex => {
+                if (model.special.includes(ex) && orders[order].moving === true) {
+                    outputCard.body.push("Unit has " + ex + " and can ignore some terrain effects");
+                }
+            })
         } else {
             outputCard.body.push("Activation Fails, Player's Turn is Over");
             _.each(UnitArray,unit => {
@@ -2226,6 +2239,9 @@ log("Cover: " + cover)
                     }
                 }
             })
+        }
+        if (order !== "Go to Ground" && result !== true) {
+            model.token.set(SM.gtg,false);
         }
 
         PrintCard();
