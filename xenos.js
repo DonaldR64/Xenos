@@ -138,9 +138,9 @@ const XR = (() => {
 
     const TerrainInfo = {
         "Woods": {name: "Woods",height: 2, los: "Woods", move: 2, cover: 1},
-        "Low Hedge": {name: "Low Hedge",height: 1, los: true, move: 50, cover: 1},
-        "Low Wall": {name: "Low Wall",height: 1, los: true, move: 50, cover: 2},
-
+        "Low Hedge": {name: "Low Hedge",height: .5, los: true, move: 50, cover: 1},
+        "Low Wall": {name: "Low Wall",height: .5, los: true, move: 50, cover: 2},
+        "Trench": {name: "Trench",height: 0,los: true, move: 50, cover: 2},
 
 
     }
