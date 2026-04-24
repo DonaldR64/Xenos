@@ -485,7 +485,7 @@ const XR = (() => {
             var b_nudge = new Cube(b.q + 1e-06, b.r + 1e-06, b.s - 2e-06);
             var results = [];
             var step = 1.0 / Math.max(N, 1);
-            for (var i = 1; i <= N; i++) {
+            for (var i = 1; i < N; i++) {
                 results.push(a_nudge.lerp(b_nudge, step * i).round());
             }
             return results;
@@ -1929,6 +1929,7 @@ log(hex)
         let los = true;
         let losReason = "";
         let cover = 0;
+        let coverTerrain = "";
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
         let distance = shooter.Distance(target);
@@ -1950,7 +1951,8 @@ log("Target E: " + targetHex.elevation);
 log("Start in Woods: " + startInWoods);
 
         let interCubes = shooterHex.cube.linedraw(targetHex.cube)
-        for (let i=0;i<interCubes.length - 1;i++) {
+log("Length: " + interCubes.length)
+        for (let i=0;i<interCubes.length;i++) {
             let label = interCubes[i].label();
             let interHex = HexMap[label];
 log("I: " + i + ": " + label + ": " + interHex.terrain)
@@ -1989,6 +1991,7 @@ log("Intersect Terrain")
                 }
                 if (i > 0 && ((interCubes.length - i) <= 3 || i <= 2)) { //0 index 
                     cover = interHex.cover;
+                    coverTerrain = interHex.terrain;
                 }
             } else {
                 if (woodhexes > 0) {
@@ -2014,7 +2017,11 @@ log("Intersect Terrain")
             los = false;
             losReason = "On Other Side of Woods";
         }
-        cover = Math.max(cover,targetHex.cover);
+        if (cover === 1 && targetHex.cover === 1 && targetHex.terrain !== coverTerrain) {
+            cover = 2;
+        } else {
+            cover = Math.max(cover,targetHex.cover);
+        }
 
 log("Cover: " + cover)
 
