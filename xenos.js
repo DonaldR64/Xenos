@@ -96,6 +96,8 @@ const XR = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px double",
             dice: "Orks",
+            dice: "Orks",
+
         },
 
         "Neutral": {
@@ -105,6 +107,7 @@ const XR = (() => {
             "fontColour": "#000000",
             "borderColour": "#00FF00",
             "borderStyle": "5px ridge",
+
         },
 
     };
@@ -131,13 +134,6 @@ const XR = (() => {
     //cover for  fire - 0 = None, 1 = Light, 2 = Heavy
     //los -> true, false or Woods
 
-    const LinearTerrain = {
-
-
-
-
-    }
-
     const Capit = (val) => {
         return String(val).charAt(0).toUpperCase() + String(val).slice(1);
     }
@@ -145,6 +141,8 @@ const XR = (() => {
 
     const TerrainInfo = {
         "Woods": {name: "Woods",height: 2, los: "Woods", move: 2, cover: 1},
+        "Low Hedge": {name: "Low Hedge",height: 1, los: true, move: 50, cover: 1},
+        "Low Wall": {name: "Low Wall",height: 1, los: true, move: 50, cover: 2},
 
 
 
@@ -623,10 +621,6 @@ const XR = (() => {
             this.cover = 0;
             this.move = 1;
             this.los = true;
-            this.edges = {};
-            _.each(DIRECTIONS,a => {
-                this.edges[a] = "Open";
-            })
             HexMap[this.label] = this;
         }
     }
@@ -1220,7 +1214,6 @@ const XR = (() => {
         }
         AddElevations();
         AddTerrain();    
-        //AddEdges();
         AddTokens();
 
 
@@ -1234,55 +1227,20 @@ const XR = (() => {
 
 
 
-    //terrain that is edges - hedges, walls, barricades and such
-    const AddEdges = () => {
-        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
-        _.each(paths,path => {
-            let type = EdgeInfo[path.get("stroke").toLowerCase()];
-            if (type) {
-                let vertices = translatePoly(path);
-                //work through pairs of vertices
-                for (let i=0;i<(vertices.length -1);i++) {
-                    let pt1 = vertices[i];
-                    let pt2 = vertices[i+1];
-                    let midPt = new Point((pt1.x + pt2.x)/2,(pt1.y + pt2.y)/2);
-                    //find nearest hex to midPt
-                    let hexLabel = midPt.label();
-                    //now run through that hexes neighbours and see what intersects with original line to identify the 2 neighbouring hexes
-                    let hex1 = HexMap[hexLabel];
-                    if (!hex1) {continue}
-                    let pt3 = hex1.centre;
-                    let neighbourCubes = hex1.cube.neighbours();
-                    for (let j=0;j<neighbourCubes.length;j++) {
-                        let k = j+3;
-                        if (k> 5) {k-=6};
-                        let hl2 = neighbourCubes[j].label();
-                        let hex2 = HexMap[hl2];
-                        if (!hex2) {continue}
-                        let pt4 = hex2.centre;
-                        let intersect = lineLine(pt1,pt2,pt3,pt4);
-                        if (intersect) {
-                            //dont overwrite bridges
-                            if (hex1.edges[DIRECTIONS[j]].name !== "Bridge") {
-                                hex1.edges[DIRECTIONS[j]] = type;
-                            }
-                            if (hex2.edges[DIRECTIONS[k]].name !== "Bridge") {
-                                hex2.edges[DIRECTIONS[k]] = type;
-                            }
-                        }
-                    }
-                }
-            }
-        })
-    }
-
 
     const AddTerrain = () => {
+
+
+
+
         //part 1 - add terrain that is tokens - woods, rubble
         //add terrain using tokens on map page, either on top or under map
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
         _.each(tokens,token => {
             let name = token.get("name");
+
+
+            //part 1 - add terrain that is tokens - woods, rubble
             let terrain = TerrainInfo[name];
             if (terrain) {
 //log(terrain)
@@ -1298,7 +1256,10 @@ const XR = (() => {
                 hex.los = terrain.los;
                 hex.cover = Math.max(hex.cover,terrain.cover);
                 hex.move = Math.max(hex.move,terrain.move);
-            }
+            } 
+
+
+
             if (name === "Map") {
                 DefineOffboard(token);
             }
@@ -1308,7 +1269,7 @@ const XR = (() => {
 
 
 
-        //part 2 - add buildings
+        //part 2 - add buildings, defined by paths
         let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
 
         _.each(paths,path => {
@@ -1666,16 +1627,6 @@ log(hex)
         let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
         outputCard.body.push("Cover: " + cover);
 
-        for (let i=0;i<6;i++) {
-            let edge = hex.edges[DIRECTIONS[i]];
-            if (edge !== "Open") {
-                outputCard.body.push(edge.name + " on " + DIRECTIONS[i] + " Edge");
-            }
-        }
-
-
-
-
         
         PrintCard();
     }
@@ -2002,7 +1953,7 @@ log("Start in Woods: " + startInWoods);
         for (let i=0;i<interCubes.length - 1;i++) {
             let label = interCubes[i].label();
             let interHex = HexMap[label];
-log(label + ": " + interHex.terrain)
+log("I: " + i + ": " + label + ": " + interHex.terrain)
             let teH = interHex.height; //terrain in hex
             let edH = 0; //height of any terrain on edge crossed
             let iH = Math.max(teH,edH);
@@ -2036,7 +1987,9 @@ log("Intersect Terrain")
                     startInWoods = false;
                     woodhexes = 0;
                 }
-                cover = Math.max(cover,interHex.cover);
+                if (i > 0 && ((interCubes.length - i) <= 3 || i <= 2)) { //0 index 
+                    cover = interHex.cover;
+                }
             } else {
                 if (woodhexes > 0) {
                     if (startInWoods === false) {
