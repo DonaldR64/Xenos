@@ -2022,6 +2022,32 @@ log("Intersect Terrain")
 
 log("Cover: " + cover)
 
+        //check of other units for blocking los
+        //sort their token centres into a polygon, then check if LOS line crosses it
+        if (los === true) {
+            _.each(UnitArray, unit => {
+                if (unit.id !== shooter.unitID && los === true) {
+                    let points = [];
+                    _.each(unit.tokenIDs.length, tokenID => {
+                        let model = ModelArray[tokenID];
+                        let pt = HexMap[model.hexLabel].centre;
+                        pts.push(pt);
+                    })
+                    points = polySort(points);
+                    for (let i=0;i<points.length - 1;i++) {
+                        let pt3 = points[i];
+                        let pt4 = points[i+1];
+                        if (lineLine(shooterHex.centre,targetHex.centre,pt3,pt4)) {
+                            los = false;
+                            losReson = "Another Unit is Blocking LOS";
+                            break;
+                        }
+
+                    }
+                }
+            })
+        }
+
         let result = {
             los: los,
             losReason: losReason,
