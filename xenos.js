@@ -699,7 +699,7 @@ const XR = (() => {
             this.token = token;
             this.unitID = "";
 
-            this.cubes = cube.radius(this.size);
+            this.cubes = cube.radius(this.size + 1);
             this.labels = this.cubes.map((e) => e.label());
             _.each(this.labels,label => {
                 HexMap[label].tokenIDs.push(this.id);
@@ -2496,7 +2496,7 @@ log(result)
                     }
                 })
                 //add new occupied hexes and update labels and cubes
-                model.cubes = cube.radius(this.size);
+                model.cubes = cube.radius(this.size + 1);
                 model.label = label;
                 model.labels = model.cubes.map((e) => e.label());
                 _.each(model.labels,label => {
