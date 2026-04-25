@@ -625,7 +625,8 @@ const XR = (() => {
     class Model {
         constructor(id) {
             let token = findObjs({_type:"graphic", id: id})[0];
-            let label = (new Point(token.get("left"),token.get("top"))).label();
+            let cube = (new Point(token.get("left"),token.get("top"))).toCube();
+            let label = cube.label();
             let charID = token.get("represents");
             let char = getObj("character", charID); 
 
@@ -640,7 +641,8 @@ const XR = (() => {
 
             this.id = id;
             this.charID = charID;
-            this.hexLabel = label;
+            this.hexLabels = [];
+            this.cubes = [];
             this.startHexLabel = label;
             this.startRotation = token.get("rotation");
             this.special = aa.special || " ";
@@ -700,38 +702,22 @@ const XR = (() => {
             this.token = token;
             this.unitID = "";
 
+            this.cubes = cube.radius(this.size);
+            this.labels = this.cubes.map((e) => e.label());
+            _.each(this.labels,label => {
+                HexMap[label].tokenIDs.push(this.id);
+            })
 
             ModelArray[id] = this;
-            HexMap[label].tokenIDs.push(id);
-
-
-
-
-
 
         }
 
-
-
-
-
-
-
-        Distance = (model2) => {
-            let hex1 = HexMap[this.hexLabel];
-            let hex2 = HexMap[model2.hexLabel];
-            let distance = hex1.cube.distance(hex2.cube);
-            distance -= (this.size + model2.size - 1); 
-            return distance;
-        }
 
         ClosestHex = (model2) => {
             let closest = Infinity;
             let c1,c2
-            let cubes1 = HexMap[this.hexLabel].cube.radius(this.size);
-            let cubes2 = HexMap[model2.hexLabel].cube.radius(model2.size);
-            _.each(cubes1,cube1 => {
-                _.each(cubes2,cube2 => {
+            _.each(this.cubes, cube1 => {
+                _.each(model2.cubes,cube2 => {
                     let d = cube1.distance(cube2);
                     if (d < closest) {
                         closest = d;
@@ -741,6 +727,7 @@ const XR = (() => {
                 })
             })
             let result = {
+                distance: closest,
                 hexLabel1: c1.label(),
                 hexLabel2: c2.label(),
             }
@@ -793,7 +780,7 @@ const XR = (() => {
             if (model2 && !unit2) {
                 _.each(this.tokenIDs,tokenID => {
                     let model = ModelArray[tokenID];
-                    let dist = Model.Distance(model,model2);
+                    let dist = model.ClosestHex(model).distance;
                     if (dist < closestDistance) {
                         closestDistance = dist;
                     }
@@ -803,7 +790,7 @@ const XR = (() => {
                     let model = ModelArray[tokenID];
                     _.each(unit2.tokenIDs,tokenID2 => {
                         let model2 = ModelArray[tokenID2];
-                        let dist = Model.Distance(model,model2);
+                        let dist = model.ClosestHex(model2).distance;
                         if (dist < closestDistance) {
                             closestDistance = dist;
                         }
@@ -1448,7 +1435,7 @@ const XR = (() => {
                         let model1 = ModelArray[unit.tokenIDs[i]];
                         for (let j=0;j<unit2.tokenIDs.length;j++) {
                             let model2 = ModelArray[unit2.tokenIDs[j]];
-                            let dist2 = model1.Distance(model2);
+                            let dist2 = model1.ClosestHex(model2).distance;
                             if (dist2 > model1.moveRate) {continue};
                             let losResult = LOS(model1,model2);
                             if (losResult.los === false) {continue};
@@ -1902,12 +1889,18 @@ log(hex)
     }
 
     const TestGroupLOS = (msg) => {
+        let startTime = Date.now();
+
         let Tag = msg.content.split(";");
         let shooter = ModelArray[Tag[1]];
         let shooterUnit = UnitArray[shooter.unitID];
         let target = ModelArray[Tag[2]];
         let targetUnit = UnitArray[target.unitID];
         GroupLOS(shooterUnit,targetUnit);
+
+        let elapsed = Date.now()-startTime;
+        log("Test Group LOS in " + elapsed/1000 + " seconds");
+
     }
 
 
@@ -1960,7 +1953,7 @@ log(hex)
         let coverTerrain = "";
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
-        let distance = shooter.Distance(target);
+        let distance = shooter.ClosestHex(target).distance;
 
         //firing arc on weapon
         let angle = TargetAngle(shooter,target);
@@ -1981,10 +1974,24 @@ log("Start in Woods: " + startInWoods);
         let interCubes = shooterHex.cube.linedraw(targetHex.cube)
         let interLabels = [];
 log("Length: " + interCubes.length)
+
+        mainLoop:
         for (let i=0;i<interCubes.length;i++) {
             let label = interCubes[i].label();
             interLabels.push(label);
             let interHex = HexMap[label];
+
+            if (interHex.tokenIDs.length > 0) {
+                for (let y=0;y<interHex.tokenIDs.length;y++) {
+                    let model3 = ModelArray[interHex.tokenIDs[y]];
+                    if (model3.unitID !== shooter.unitID && model3.unitID !== target.unitID) {
+                        los = false;
+                        losReason = "Blocked by an Intervening Unit";
+                        break mainLoop;
+                    }
+                }
+            }
+
 log("I: " + i + ": " + label + ": " + interHex.terrain)
             let teH = interHex.height; //terrain in hex
             let edH = 0; //height of any terrain on edge crossed
@@ -1998,14 +2005,14 @@ log("Intersect Terrain")
                 if (interHex.los === false) {
                     los = false;
                     losReason = "Blocked by " +  interHex.terrain;
-                    break;
+                    break mainLoop;
                 }
                 if (interHex.los === "Woods") {
                     woodhexes += 1;
                     if (woodhexes > 3) {
                         los = false;
                         losReason = "Blocked by Depth of Woods";
-                        break;
+                        break mainLoop;
                     }
                 }
                 if (interHex.los === true) {
@@ -2013,7 +2020,7 @@ log("Intersect Terrain")
                         if (startInWoods === false) {
                             los = false;
                             losReason = "On Other Side of Woods";
-                            break;
+                            break mainLoop;
                         } 
                     }
                     startInWoods = false;
@@ -2028,7 +2035,7 @@ log("Intersect Terrain")
                     if (startInWoods === false) {
                         los = false;
                         losReason = "On Other Side of Woods";
-                        break;
+                        break mainLoop;
                     } 
                 }
                 startInWoods = false;
@@ -2054,7 +2061,7 @@ log("Intersect Terrain")
         }
 
 log("Cover: " + cover)
-
+/*
         //check of other units for blocking los
         //sort their token centres into a polygon, then check if LOS line crosses it
 log("Shooter Unit ID: " + shooter.unitID)
@@ -2065,11 +2072,14 @@ log("Shooter Unit ID: " + shooter.unitID)
 log(unit.id)
                     let points = [];
                     if (unit.tokenIDs.length === 1) {
-                        let intercubes = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel].cube.radius(unit.size);
-                        let interlabels = intercubes.map((e)=> e.label());
-                        if (interLabels.includes(uHex.label)) {
-                            los = false;
-                            losReason = "Another Unit is Blocking LOS";
+                        let unitCubes = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel].cube.radius(unit.size);
+                        let unitLabels = unitCubes.map((e)=> e.label());
+                        for (let u=0;u<unitLabels.length;u++) {
+                            let label = unitLabels[u];
+                            if (interLabels.includes(label)) {
+                                los = false;
+                                losReason = "Another Unit is Blocking LOS";
+                            }
                         }
                     } else {
                         _.each(unit.tokenIDs, tokenID => {
@@ -2091,6 +2101,7 @@ log(sorted)
                 }
             })
         }
+*/
 
         let result = {
             los: los,
@@ -2474,17 +2485,25 @@ log(result)
         //RemoveLines();
         let model = ModelArray[tok.id];
         if (model) {
-            let label = (new Point(tok.get("left"),tok.get("top"))).label();
+            let cube = (new Point(token.get("left"),token.get("top"))).toCube();
+            let label = cube.label();
             let prevLabel = (new Point(prev.left,prev.top)).label();
             if (label !== model.hexLabel || tok.get("rotation") !== prev.rotation) {
-                
                 log(model.name + ' is moving from ' + model.hexLabel + ' to ' + label)
-                let index = HexMap[model.hexLabel].tokenIDs.indexOf(model.id);
-                if (index > -1) {
-                    HexMap[model.hexLabel].tokenIDs.splice(index,1);
-                }
-                HexMap[label].tokenIDs.push(model.id);
-                model.hexLabel = label;
+                //remove old occupied hexes
+                _.each(model.labels,l => {
+                    let index = HexMap[l].tokenIDs.indexOf(model.id);
+                    if (index > -1) {
+                        HexMap[l].tokenIDs.splice(index,1);
+                    }
+                })
+                //add new occupied hexes and update labels and cubes
+                model.cubes = cube.radius(this.size);
+                model.labels = model.cubes.map((e) => e.label());
+                _.each(model.labels,label => {
+                    HexMap[label].tokenIDs.push(this.id);
+                })
+                //centre in the hex
                 model.token.set({
                     left: HexMap[label].centre.x,
                     top: HexMap[label].centre.y,
