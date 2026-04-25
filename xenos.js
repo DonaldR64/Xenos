@@ -641,9 +641,6 @@ const XR = (() => {
 
             this.id = id;
             this.charID = charID;
-            this.hexLabels = [];
-            this.cubes = [];
-            this.startHexLabel = label;
             this.startRotation = token.get("rotation");
             this.special = aa.special || " ";
             this.rank = aa.rank || "Trooper";
@@ -707,6 +704,7 @@ const XR = (() => {
             _.each(this.labels,label => {
                 HexMap[label].tokenIDs.push(this.id);
             })
+            this.label = label;
 
             ModelArray[id] = this;
 
@@ -715,21 +713,21 @@ const XR = (() => {
 
         ClosestHex = (model2) => {
             let closest = Infinity;
-            let c1,c2
+            let h1,h2;
             _.each(this.cubes, cube1 => {
                 _.each(model2.cubes,cube2 => {
                     let d = cube1.distance(cube2);
                     if (d < closest) {
                         closest = d;
-                        c1 = cube1;
-                        c2 = cube2;
+                        h1 = cube1.label();
+                        h2 = cube2.label();
                     }
                 })
             })
             let result = {
                 distance: closest,
-                hexLabel1: c1.label(),
-                hexLabel2: c2.label(),
+                hexLabel1: h1,
+                hexLabel2: h2,
             }
             return result;
         }
@@ -1585,10 +1583,10 @@ log(explored)
         let model = ModelArray[id];
         if (!model) {return};
         SetupCard(model.name,"",model.faction);
-        let hex = HexMap[model.hexLabel];
+        let hex = HexMap[model.label];
 log(hex)
 
-        outputCard.body.push("Hex: " + model.hexLabel);
+        outputCard.body.push("Hex: " + model.label);
         outputCard.body.push("Terrain: " + hex.terrain);
         outputCard.body.push("Elevation: " + hex.elevation);
         let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
@@ -1601,7 +1599,7 @@ log(hex)
 
     const BlastCheck = (targetCentre,model,radius) => {
         radius = radius * HexInfo.size * 2;
-        let modelCentre = HexMap[model.hexLabel].centre;
+        let modelCentre = HexMap[model.label].centre;
         let theta = Angle(model.token.get("rotation")) * Math.PI/180;
         let w = model.token.get("width");
         let h = model.token.get("height");
@@ -1841,10 +1839,10 @@ log(hex)
 
 
     const TargetAngle = (shooter,target) => {
-        let shooterHex = HexMap[shooter.hexLabel];
-        let targetHex = HexMap[target.hexLabel];
+        let sCube = (new Point(shooter.token.get("left"),shooter.token.get("top"))).toCube();
+        let tCube = (new Point(target.token.get("left"),target.token.get("top"))).toCube();
         //angle from shooter's hex to target's hex
-        let phi = Angle(shooterHex.cube.angle(targetHex.cube));
+        let phi = Angle(sCube.angle(tCube));
         let theta = Angle(shooter.token.get("rotation"));
         let gamma = Angle(phi - theta);
         return gamma;
@@ -1951,8 +1949,8 @@ log(hex)
         let losReason = "";
         let cover = 0;
         let coverTerrain = "";
-        let shooterHex = HexMap[shooter.hexLabel];
-        let targetHex = HexMap[target.hexLabel];
+        let shooterHex = HexMap[shooter.label];
+        let targetHex = HexMap[target.label];
         let distance = shooter.ClosestHex(target).distance;
 
         //firing arc on weapon
@@ -2391,7 +2389,7 @@ log(sorted)
         _.each(unit.tokenIDs,tokenID => {
             let model = ModelArray[tokenID];
             currentStrength += model.token.get("bar1_value");
-            if (HexMap[model.hexLabel].cover > 0) {inCover++};
+            if (HexMap[model.label].cover > 0) {inCover++};
         })
         let dice = (currentStrength/state.XR.unitInfo[unit.id].strength > 0.5) ? 2:1;
         courageTip += "<br>Dice: " + dice;
@@ -2485,11 +2483,11 @@ log(result)
         //RemoveLines();
         let model = ModelArray[tok.id];
         if (model) {
-            let cube = (new Point(token.get("left"),token.get("top"))).toCube();
+            let cube = (new Point(tok.get("left"),tok.get("top"))).toCube();
             let label = cube.label();
             let prevLabel = (new Point(prev.left,prev.top)).label();
-            if (label !== model.hexLabel || tok.get("rotation") !== prev.rotation) {
-                log(model.name + ' is moving from ' + model.hexLabel + ' to ' + label)
+            if (label !== model.label || tok.get("rotation") !== prev.rotation) {
+                log(model.name + ' is moving from ' + prevLabel + ' to ' + label)
                 //remove old occupied hexes
                 _.each(model.labels,l => {
                     let index = HexMap[l].tokenIDs.indexOf(model.id);
@@ -2499,6 +2497,7 @@ log(result)
                 })
                 //add new occupied hexes and update labels and cubes
                 model.cubes = cube.radius(this.size);
+                model.label = label;
                 model.labels = model.cubes.map((e) => e.label());
                 _.each(model.labels,label => {
                     HexMap[label].tokenIDs.push(this.id);
