@@ -1863,6 +1863,54 @@ log(hex)
         return gamma;
     }
 
+    const GroupLOS = (shooterUnit,targetUnit) => {
+        let losFlag = false;
+        let coverArray = [0,0,0];
+        
+        for (let s=0;s<shooterUnit.tokenIDs.length;s++) {
+            let shooter = ModelArray[shooterUnit.tokenIDs[s]];
+            for (let t=0;t<targetUnit.tokenIDs.length;t++) {
+                let target = ModelArray[targetUnit.tokenIDs[t]];
+                let losResult = LOS(shooter,target);
+                if (losResult.los === false) {
+                    coverArray[2]++;
+                } else {
+                    losFlag = true;
+                    coverArray[losResult.cover]++;
+                }
+            }
+        }
+
+        if (losFlag === false) {
+            sendChat("","No One has LOS");
+        } else {
+            let max = 0;
+            let level = 0;
+            for (let c=0;c<3;c++) {
+                if (coverArray[c] > max) {
+                    max = coverArray[c];
+                    level = c;
+                }
+            }
+            sendChat("","Average Cover Level is " + level);
+        }
+
+
+
+
+
+    }
+
+    const TestGroupLOS = (msg) => {
+        let Tag = msg.content.split(";");
+        let shooter = ModelArray[Tag[1]];
+        let shooterUnit = UnitArray[shooter.unitID];
+        let target = ModelArray[Tag[2]];
+        let targetUnit = UnitArray[target.unitID];
+        GroupLOS(shooterUnit,targetUnit);
+    }
+
+
 
 
 
@@ -2518,6 +2566,12 @@ log(result)
             case '!Test':
                 Test(msg);
                 break;
+            case '!TestGroupLOS':
+                TestGroupLOS(msg);
+                break;
+
+
+
             case '!Roll':
                 RollDice(msg);
                 break;
