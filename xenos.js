@@ -886,31 +886,23 @@ const XR = (() => {
 
 
 
+    function sortPointsIntoPolygon(points) {
+        // 1. Find the centroid (average x and y)
+        const centroid = points.reduce((acc, p) => {
+            acc.x += p.x / points.length;
+            acc.y += p.y / points.length;
+            return acc;
+        }, { x: 0, y: 0 });
 
+        // 2. Map points to include their angle relative to the centroid
+        const pointsWithAngles = points.map(p => ({
+            ...p,
+            angle: Math.atan2(p.y - centroid.y, p.x - centroid.x)
+        }));
 
-    const squaredPolar = (point, centre) => {
-        return [
-            Math.atan2(point.y-centre.y, point.x-centre.x),
-            (point.x-centre.x)**2 + (point.y-centre.y)**2 // Square of distance
-        ];
+        // 3. Sort points by angle
+        return pointsWithAngles.sort((a, b) => a.angle - b.angle);
     }
-
-    // sort points into a polygon
-    const polySort = (points,request) => {
-        // Get "centre of mass"
-        let centre = [points.reduce((sum, p) => sum + p.x, 0) / points.length,
-                      points.reduce((sum, p) => sum + p.y, 0) / points.length];
-        if (request && request == "Centre") {
-            return centre
-        }
-        // Sort by polar angle and distance, centered at this centre of mass.
-        for (let point of points) point.push(...squaredPolar(point, centre));
-        points.sort((a,b) => a[2] - b[2] || a[3] - b[3]);
-        // Throw away the temporary polar coordinates
-        for (let point of points) point.length -= 2; 
-    }
-
-
 
 
 
@@ -1939,9 +1931,11 @@ log("Target E: " + targetHex.elevation);
 log("Start in Woods: " + startInWoods);
 
         let interCubes = shooterHex.cube.linedraw(targetHex.cube)
+        let interLabels = [];
 log("Length: " + interCubes.length)
         for (let i=0;i<interCubes.length;i++) {
             let label = interCubes[i].label();
+            interLabels.push(label);
             let interHex = HexMap[label];
 log("I: " + i + ": " + label + ": " + interHex.terrain)
             let teH = interHex.height; //terrain in hex
@@ -2015,23 +2009,34 @@ log("Cover: " + cover)
 
         //check of other units for blocking los
         //sort their token centres into a polygon, then check if LOS line crosses it
+log("Shooter Unit ID: " + shooter.unitID)
+
         if (los === true) {
             _.each(UnitArray, unit => {
-                if (unit.id !== shooter.unitID && los === true) {
+                if (unit.id !== shooter.unitID && unit.id !== target.unitID && los === true) {
+log(unit.id)
                     let points = [];
-                    _.each(unit.tokenIDs.length, tokenID => {
-                        let model = ModelArray[tokenID];
-                        let pt = HexMap[model.hexLabel].centre;
-                        pts.push(pt);
-                    })
-                    polySort(points);
-                    for (let i=0;i<points.length - 1;i++) {
-                        let pt3 = points[i];
-                        let pt4 = points[i+1];
-                        if (lineLine(shooterHex.centre,targetHex.centre,pt3,pt4)) {
+                    if (unit.tokenIDs.length === 1) {
+                        let uHex = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel];
+                        if (interLabels.includes(uHex.label)) {
                             los = false;
-                            losReson = "Another Unit is Blocking LOS";
-                            break;
+                            losReason = "Another Unit is Blocking LOS";
+                        }
+                    } else {
+                        _.each(unit.tokenIDs, tokenID => {
+                            points.push(HexMap[ModelArray[tokenID].hexLabel].centre);
+                        })
+                       let sorted = sortPointsIntoPolygon(points);
+log(sorted)
+                        for (let i=0;i<sorted.length;i++) {
+                            let pt3 = sorted[i];
+                            let j = (i < sorted.length - 1) ? i+1:0;
+                            let pt4 = sorted[j];
+                            if (lineLine(shooterHex.centre,targetHex.centre,pt3,pt4)) {
+                                los = false;
+                                losReason = "Another Unit is Blocking LOS";
+                                break;
+                            }
                         }
                     }
                 }
