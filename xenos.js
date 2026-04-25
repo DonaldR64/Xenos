@@ -2017,7 +2017,8 @@ log("Shooter Unit ID: " + shooter.unitID)
 log(unit.id)
                     let points = [];
                     if (unit.tokenIDs.length === 1) {
-                        let uHex = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel];
+                        let intercubes = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel].cube.radius(unit.size);
+                        let interlabels = intercubes.map((e)=> e.label());
                         if (interLabels.includes(uHex.label)) {
                             los = false;
                             losReason = "Another Unit is Blocking LOS";
