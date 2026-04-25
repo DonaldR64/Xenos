@@ -888,15 +888,6 @@ const XR = (() => {
 
 
 
-
-
-
-
-
-
-
-
-
     const squaredPolar = (point, centre) => {
         return [
             Math.atan2(point.y-centre.y, point.x-centre.x),
@@ -2033,7 +2024,7 @@ log("Cover: " + cover)
                         let pt = HexMap[model.hexLabel].centre;
                         pts.push(pt);
                     })
-                    points = polySort(points);
+                    polySort(points);
                     for (let i=0;i<points.length - 1;i++) {
                         let pt3 = points[i];
                         let pt4 = points[i+1];
@@ -2042,7 +2033,6 @@ log("Cover: " + cover)
                             losReson = "Another Unit is Blocking LOS";
                             break;
                         }
-
                     }
                 }
             })
