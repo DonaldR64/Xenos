@@ -2247,12 +2247,10 @@ log(hex)
         if (!weapon) {
             errorMsg.push("[#ff0000]Unit has no Ranged Weapons[/#]");
         }
-        let rangeBand = weapon.range;
-        if (losResult.distance > rangeBand && rangeBand <= 12) {
+        let rangeBand = Math.ceil(losResult.distance/weapon.range);
+        if (rangeBand > 3 || (losResult.distance > 12 && weapon.range <= 12)) {
             errorMsg.push("[#ff0000]Target Unit is out of Range[/#]");
         }
-
-
 
         if (ErrorMsg(errorMsg) === true) {return};
 
@@ -2282,18 +2280,47 @@ log(hex)
         }
         shootRolls.sort();
         shootRolls.reverse();
+
+        let vs = shooterLeader.shootVal < 6 ? shooterLeader.shootVal + "+":shooterLeader.shootVal; 
+
         shooterTip += "<br>Rolls: " + shootRolls.toString();
-        shooterTip += "<br>Shoot Value: " + shooterLeader.shootVal + "+";
+        shooterTip += "<br>Shoot Value: " + vs;
         if (hits === 0) {
             shooterTip = '[Misses](#" class="showtip" title="' + shooterTip + ')';
         } else {
-            shooterTip = 'gets [' + hits +  ' Hits](#" class="showtip" title="' + shooterTip + ')';
+            let hitText = (hits > 1) ? hits + " Hits":hits + " Hit";
+            shooterTip = 'gets [' + hitText +  '](#" class="showtip" title="' + shooterTip + ')';
         }
         outputCard.body.push(shooterUnit.name + " fires its " + weapon.name);
         outputCard.body.push("It " + shooterTip);
 
-
-
+        let armour = targetLeader.armour;
+        let armourTip = "Armour: " + armour;
+        if (losResult.cover === 0) {
+            armourTip += "<br>No Cover";
+        } else if (losResult.cover === 1) {
+            armourTip += "<br>Soft Cover +1 Armour";
+        } else if (losResult.cover === 2) {
+            armourTip += "<br>Hard Cover +2 Armour";
+        }
+        armour += losResult.cover;
+        if (rangeBand === 1) {
+            armourTip += "<br>Effective Range";
+        } else if (rangeBand === 2) {
+            armourTip += "<br>Long Range +1 Armour";
+        } else if (rangeBand === 3) {
+            armourTip += "<br>Extreme Range +2 Armour";
+        }
+        armour += (rangeBand - 1);
+        
+        let wounds = Math.floor(hits/armour);
+        let s = (wounds === 1) ? "":"s";
+        if (wounds === 0) {
+            woundTip = '[No](#" class="showtip" title="' + armourTip + ')';
+        } else {
+            woundTip = '[' + wounds +'](#" class="showtip" title="' + armourTip + ')';
+        }
+        outputCard.body.push(woundTip + " Wound" + s + " are inflicted");
 
 
 
