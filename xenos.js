@@ -114,11 +114,9 @@ const XR = (() => {
 
 
     const SM = {
-        supp: "status_yellow",
-        unavail: "status_oneshot::5503748",
         gtg: "status_Disadvantage-or-Down::2006464",
-        back: "status_green",
-
+        back: "status_green", //change ?
+        firefight: "status_blue", //change
 
 
     }
@@ -676,7 +674,7 @@ const XR = (() => {
 
             this.wounds = parseInt(aa.wounds) || 1;
 
-            let weaponArray = [];
+            let rangedWeapon,ccWeapon;
             for (let i=1;i<3;i++) {
                 let name = aa["weapon" + i + "Name"];
                 if (!name || name === "") {continue};
@@ -692,10 +690,15 @@ const XR = (() => {
                     fx: fx,
                     sound: sound,
                 }
-                weaponArray.push(weapon);
+                if (range === "CC") {
+                    ccWeapon = weapon;
+                } else {
+                    rangedWeapon = weapon;
+                }
             }
 
-            this.weaponArray = weaponArray;
+            this.rangedWeapon = rangedWeapon;
+            this.ccWeapon = ccWeapon;
             this.token = token;
             this.unitID = "";
             this.cube = cube;
@@ -1310,6 +1313,7 @@ const XR = (() => {
                 let unit = UnitArray[gmn];
                 if (!unit) {
                     unit = new Unit(token.get("id"),gmn);
+                    unit.name = state.XR.unitInfo[gmn].name;
                 }
                 unit.AddModel(model.id);
             }
@@ -1410,6 +1414,9 @@ const XR = (() => {
     const SetAuras = (faction) => {
         _.each(UnitArray,unit => {
             let leader = ModelArray[unit.leaderID];
+            leader.token.set(SM.done,false);
+            leader.token.set(SM.firefight,false);
+
             if (unit.faction === faction && leader.token.get("aura1_color") !== "#ffff00") {
                 let wildFlag = false;
                 if (unit.wild === true) {
@@ -2031,9 +2038,11 @@ log(hex)
             return;
         };
         let Tag = msg.content.split(";");
-        let unitPoints = Tag[1];
+        let unitName = Tag[1]
+        let unitPoints = Tag[2];
 
         let unit = new Unit(msg.selected[0]._id);
+        unit.name = unitName;
         state.XR.unitNum[unit.player] += 1;
         unit.symbol = "status_" + UnitMarkers[state.XR.unitNum] || "status_brown";
         let unitStrength = 0;
@@ -2082,6 +2091,7 @@ log(hex)
             unitStrength += model.wounds;
         })
         let info = {
+            name: unitName,
             strength: unitStrength,
             points: unitPoints,
         }
@@ -2110,18 +2120,24 @@ log(hex)
         let unit = UnitArray[model.unitID];
         let errorMsg = [];
 
-        if (model.token.get("aura1_color") !== "#00ff00") {
+        if (model.token.get("aura1_color") === "#ffff00") {
+            errorMsg.push("Unit is Suppressed");
+        }
+        if (model.token.get("aura1_color") === "#000000" && order !== "Firefight") {
             errorMsg.push("Unit has already Activated this turn");
         }
+        if (order === "Firefight" && model.token.get(SM.firefight) === true) {
+            errorMsg.push("Unit has already taken a Firefight Reaction this Turn");
+        }
 
-        SetupCard("Activation",model.name,model.faction);
+        SetupCard(order,model.name,model.faction);
 
         if (ErrorMsg(errorMsg) === true) {return};
 
         if (state.XR.firstPlayer === -1) {
             state.XR.firstPlayer = unit.player;
         }
-        if (state.XR.activePlayer !== unit.player) {
+        if (state.XR.activePlayer !== unit.player && order !== "Firefight") {
             state.XR.activePlayer = unit.player;
         }
 
@@ -2134,43 +2150,44 @@ log(hex)
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit can complete its Movement, it has a movement rate of " + model.moveRate,
-                marker: "",
             },
             "Go to Ground": {
                 moving: false,
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit Goes to Ground",
-                marker: SM.gtg,
             },
             Attack: {
                 moving: true,
                 stat: "Attack",
                 target: model.attackOn[pos],
                 phrase: "Unit can complete its Charge, it has a movement rate of " + model.moveRate,
-                marker: "",
             },
             Shoot: {
                 moving: false,
                 stat: "Shoot",
                 target: model.shootOn[pos],
                 phrase: "Unit may Shoot",
-                marker: "",
             },
             Skirmish: {
                 moving: true,
                 stat: "Fixed 7",
                 target: 7,
                 phrase: "Unit may Move up to 1/2 (" + Math.floor(model.moveRate/2) + ") and Shoot, in either order",
-                marker: SM.skirmish,
             },
             "Move and Shoot": {
                 moving: true,
                 stat: "Move",
                 target: model.moveOn[pos],
                 phrase: "Unit may Move (" + model.moveRate+ ") and Shoot, in either order",
-                marker: "",
             },
+            Firefight: {
+                moving: false,
+                stat: "Fixed 7",
+                target: 7,
+                phrase: "Unit may Shoot back in a Firefight Reaction",
+            }
+
         }
 
         let result = ActivationTest(model,orders[order].stat,orders[order].target,2,pos); 
@@ -2184,20 +2201,24 @@ log(hex)
                 }
             })
         } else {
-            outputCard.body.push("Activation Fails, Player's Turn is Over");
-            _.each(UnitArray,unit => {
-                if (unit.player === model.player) {
-                    let leader = ModelArray[unit.leaderID];
-                    if (leader.token.get("aura1_color") === "#00ff00") {
-                        leader.token.set("aura1_color","#000000");
-                    }
-                }
-            })
+            if (order === "Firefight") {
+                outputCard.body.push("Unit fails to engage in a Firefight");
+            } else {
+                outputCard.body.push("Activation Fails, the Unit remains stationary");
+            }
         }
-        if (order !== "Go to Ground" && result !== true) {
+
+        if (order === "Firefight") {
+            model.token.set(SM.firefight,true);
+        }
+        if (order === "Go To Ground" && result === true) {
+            model.token.set(SM.gtg,true);
+        } else {
             model.token.set(SM.gtg,false);
         }
-        model.token.set("aura1_color","#000000");
+        if (order !== "Firefight") {
+            model.token.set("aura1_color","#000000");
+        }
         PrintCard();
     }
 
@@ -2209,6 +2230,87 @@ log(hex)
         PrintCard();
         return true;
     }
+
+
+    const Shoot = (msg) => {
+        let Tag = msg.content.split(";");
+        let shooterLeader = ModelArray[Tag[1]];
+        let shooterUnit = UnitArray[shooterLeader.unitID];
+        let targetLeader = ModelArray[Tag[2]];
+        let targetUnit = UnitArray[targetLeader.unitID];
+        let weapon = shooterLeader.rangedWeapoon;
+
+        SetupCard(shooterUnit.name,targetUnit.name,model.faction);
+        let errorMsg = [];
+        let losResult = GroupLOS(shooterUnit,targetUnit);
+
+        if (losResult.los === false) {
+            errorMsg.push("[#ff0000]No LOS to Target Unit[/#]");
+        }
+        if (!weapon) {
+            errorMsg.push("[#ff0000]Unit has no Ranged Weapons[/#]");
+        }
+        let rangeBand = weapon.range;
+        if (losResult.distance > rangeBand && rangeBand <= 12) {
+            errorMsg.push("[#ff0000]Target Unit is out of Range[/#]");
+        }
+
+
+
+        if (ErrorMsg(errorMsg) === true) {return};
+
+        let dice = 10;
+        let shooterTip = "Full Strength";
+        let usp = 0;
+        _.each(shooterUnit.tokenIDs,tokenID => {
+            let model = ModelArray[tokenID];
+            let sp = parseInt(model.token.get("bar1_value"));
+            usp += sp;
+        });
+
+        let originalUSP = state.XR.unitInfo[shooterUnit.id].strength;
+        if (Math.floor(usp/originalUSP) <= .5) {
+            dice = 5;
+            shooterTip = "Half Strength";
+        }
+
+        let shootRolls = [];
+        let hits = 0;
+        for (let i=0;i<dice;i++) {
+            let shootRoll = randomInteger(6);
+            if (shootRoll >= shooterLeader.shootVal) {
+                hits++;
+            }
+            shootRolls.push(shootRoll);
+        }
+        shootRolls.sort();
+        shootRolls.reverse();
+        shooterTip += "<br>Rolls: " + shootRolls.toString();
+        shooterTip += "<br>Shoot Value: " + shooterLeader.shootVal + "+";
+        if (hits === 0) {
+            shooterTip = '[Misses](#" class="showtip" title="' + courageTip + ')';
+        } else {
+            shooterTip = 'gets [' + hits +  ' Hits](#" class="showtip" title="' + courageTip + ')';
+        }
+        outputCard.body.push(shooterUnit.name + " fires its " + weapon.name);
+        outputCard.body.push("It " + shooterTip);
+
+
+
+
+
+
+
+        PrintCard();
+    }
+
+
+
+
+
+
+
+
 
 
 
@@ -2497,8 +2599,8 @@ log(result)
             case '!Test':
                 Test(msg);
                 break;
-            case '!TestGroupLOS':
-                TestGroupLOS(msg);
+            case '!Shoot':
+                Shoot(msg);
                 break;
 
 
