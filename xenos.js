@@ -1952,7 +1952,6 @@ log(hex)
         let shooterHex = HexMap[shooter.label];
         let targetHex = HexMap[target.label];
         let distance = shooter.ClosestHex(target).distance;
-
         //firing arc on weapon
         let angle = TargetAngle(shooter,target);
         let angleT = TargetAngle(target,shooter);
@@ -1961,17 +1960,17 @@ log(hex)
 
         //check lines
         let pt1 = new Point(0,shooterHex.elevation);
-        let pt2 = new Point(distance,targetHex.elevation);
-log("Shooter E: " + shooterHex.elevation);
-log("Target E: " + targetHex.elevation);
+//log("Pt1: " + pt1.x + " / " + pt1.y);
 
         let woodhexes = 0;
         let startInWoods = (shooterHex.los === "Woods") ? true:false;
-log("Start in Woods: " + startInWoods);
+//log("Start in Woods: " + startInWoods);
 
         let interCubes = shooterHex.cube.linedraw(targetHex.cube)
         let interLabels = [];
-log("Length: " + interCubes.length)
+//log("Length: " + interCubes.length)
+        let pt2 = new Point(interCubes.length + 1,targetHex.elevation);
+//log("Pt2: " + pt2.x + " / " + pt2.y);
 
         mainLoop:
         for (let i=0;i<interCubes.length;i++) {
@@ -1990,16 +1989,17 @@ log("Length: " + interCubes.length)
                 }
             }
 
-log("I: " + i + ": " + label + ": " + interHex.terrain)
-            let teH = interHex.height; //terrain in hex
-            let edH = 0; //height of any terrain on edge crossed
-            let iH = Math.max(teH,edH);
-            interHexHeight = iH + interHex.elevation;
+//log("I: " + i + ": " + label + ": " + interHex.terrain)
+            let interHexHeight = interHex.height + interHex.elevation;
             let pt3 = new Point(i,0);
             let pt4 = new Point(i,interHexHeight);
-            
-            if (lineLine(pt1,pt2,pt3,pt4)) {
-log("Intersect Terrain")
+//log("Pt3: " + pt3.x + " / " + pt3.y);
+//log("Pt4: " + pt4.x + " / " + pt4.y);
+
+
+            let intersect = lineLine(pt1,pt2,pt3,pt4);
+//log("Intersect: " + intersect)
+            if (intersect) {
                 if (interHex.los === false) {
                     los = false;
                     losReason = "Blocked by " +  interHex.terrain;
@@ -2058,48 +2058,8 @@ log("Intersect Terrain")
             cover = Math.max(cover,targetHex.cover);
         }
 
-log("Cover: " + cover)
-/*
-        //check of other units for blocking los
-        //sort their token centres into a polygon, then check if LOS line crosses it
-log("Shooter Unit ID: " + shooter.unitID)
+//log("Cover: " + cover)
 
-        if (los === true) {
-            _.each(UnitArray, unit => {
-                if (unit.id !== shooter.unitID && unit.id !== target.unitID && los === true) {
-log(unit.id)
-                    let points = [];
-                    if (unit.tokenIDs.length === 1) {
-                        let unitCubes = HexMap[ModelArray[unit.tokenIDs[0]].hexLabel].cube.radius(unit.size);
-                        let unitLabels = unitCubes.map((e)=> e.label());
-                        for (let u=0;u<unitLabels.length;u++) {
-                            let label = unitLabels[u];
-                            if (interLabels.includes(label)) {
-                                los = false;
-                                losReason = "Another Unit is Blocking LOS";
-                            }
-                        }
-                    } else {
-                        _.each(unit.tokenIDs, tokenID => {
-                            points.push(HexMap[ModelArray[tokenID].hexLabel].centre);
-                        })
-                       let sorted = sortPointsIntoPolygon(points);
-log(sorted)
-                        for (let i=0;i<sorted.length;i++) {
-                            let pt3 = sorted[i];
-                            let j = (i < sorted.length - 1) ? i+1:0;
-                            let pt4 = sorted[j];
-                            if (lineLine(shooterHex.centre,targetHex.centre,pt3,pt4)) {
-                                los = false;
-                                losReason = "Another Unit is Blocking LOS";
-                                break;
-                            }
-                        }
-                    }
-                }
-            })
-        }
-*/
 
         let result = {
             los: los,
