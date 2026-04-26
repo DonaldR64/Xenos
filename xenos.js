@@ -1838,7 +1838,7 @@ log(hex)
         let max = 0;
         let level = 0;
         for (let c=0;c<3;c++) {
-            if (coverArray[c] > max) {
+            if (coverArray[c] >= max) { //>= so if has equal #s, takes higher coverlevel
                 max = coverArray[c];
                 level = c;
             }
@@ -1858,6 +1858,7 @@ log(hex)
 
 
     const CheckLOS = (msg) => {
+        let startTime = Date.now();
         let Tag = msg.content.split(";");
         let shooter = ModelArray[Tag[1]];
         let shooterUnit = UnitArray[shooter.unitID];
@@ -1886,6 +1887,9 @@ log(hex)
             outputCard.body.push("Target Unit has " + coverLevels[losResult.cover] + " Cover");
         }
 
+
+        let elapsed = Date.now()-startTime;
+        log("Check Group LOS in " + elapsed/1000 + " seconds");
 
 
         PrintCard();
