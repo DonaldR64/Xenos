@@ -674,7 +674,6 @@ const XR = (() => {
 
             this.wounds = parseInt(aa.wounds) || 1;
 
-            let rangedWeapon,ccWeapon;
             for (let i=1;i<3;i++) {
                 let name = aa["weapon" + i + "Name"];
                 if (!name || name === "") {continue};
@@ -691,14 +690,12 @@ const XR = (() => {
                     sound: sound,
                 }
                 if (range === "CC") {
-                    ccWeapon = weapon;
+                    this.ccWeapon = weapon;
                 } else {
-                    rangedWeapon = weapon;
+                    this.rangedWeapon = weapon;
                 }
             }
 
-            this.rangedWeapon = rangedWeapon;
-            this.ccWeapon = ccWeapon;
             this.token = token;
             this.unitID = "";
             this.cube = cube;
@@ -2238,9 +2235,9 @@ log(hex)
         let shooterUnit = UnitArray[shooterLeader.unitID];
         let targetLeader = ModelArray[Tag[2]];
         let targetUnit = UnitArray[targetLeader.unitID];
-        let weapon = shooterLeader.rangedWeapoon;
+        let weapon = shooterLeader.rangedWeapon;
 
-        SetupCard(shooterUnit.name,targetUnit.name,model.faction);
+        SetupCard(shooterUnit.name,targetUnit.name,shooterLeader.faction);
         let errorMsg = [];
         let losResult = GroupLOS(shooterUnit,targetUnit);
 
@@ -2264,7 +2261,7 @@ log(hex)
         let usp = 0;
         _.each(shooterUnit.tokenIDs,tokenID => {
             let model = ModelArray[tokenID];
-            let sp = parseInt(model.token.get("bar1_value"));
+            let sp = parseInt(model.token.get("bar1_value")) || 1;
             usp += sp;
         });
 
@@ -2288,9 +2285,9 @@ log(hex)
         shooterTip += "<br>Rolls: " + shootRolls.toString();
         shooterTip += "<br>Shoot Value: " + shooterLeader.shootVal + "+";
         if (hits === 0) {
-            shooterTip = '[Misses](#" class="showtip" title="' + courageTip + ')';
+            shooterTip = '[Misses](#" class="showtip" title="' + shooterTip + ')';
         } else {
-            shooterTip = 'gets [' + hits +  ' Hits](#" class="showtip" title="' + courageTip + ')';
+            shooterTip = 'gets [' + hits +  ' Hits](#" class="showtip" title="' + shooterTip + ')';
         }
         outputCard.body.push(shooterUnit.name + " fires its " + weapon.name);
         outputCard.body.push("It " + shooterTip);
