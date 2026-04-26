@@ -2323,6 +2323,9 @@ log(hex)
         outputCard.body.push(woundTip + " Wound" + s + " are inflicted");
 
 
+//courage test
+//mark casualties ?
+
 
 
         PrintCard();
