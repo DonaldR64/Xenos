@@ -698,7 +698,7 @@ const XR = (() => {
             this.weaponArray = weaponArray;
             this.token = token;
             this.unitID = "";
-
+            this.cube = cube;
             this.cubes = cube.radius(this.size + 1);
             this.labels = this.cubes.map((e) => e.label());
             _.each(this.labels,label => {
@@ -714,8 +714,11 @@ const XR = (() => {
         ClosestHex = (model2) => {
             let closest = Infinity;
             let h1,h2;
-            _.each(this.cubes, cube1 => {
-                _.each(model2.cubes,cube2 => {
+            let cubes1 = this.cube.radius(this.size); 
+            let cubes2 = model2.cube.radius(model2.size);
+
+            _.each(cubes1, cube1 => {
+                _.each(cubes2,cube2 => {
                     let d = cube1.distance(cube2);
                     if (d < closest) {
                         closest = d;
@@ -1851,6 +1854,7 @@ log(hex)
     const GroupLOS = (shooterUnit,targetUnit) => {
         let losFlag = false;
         let coverArray = [0,0,0];
+        let closestDistance = Infinity;
         
         for (let s=0;s<shooterUnit.tokenIDs.length;s++) {
             let shooter = ModelArray[shooterUnit.tokenIDs[s]];
@@ -1860,82 +1864,62 @@ log(hex)
                 if (losResult.los === false) {
                     coverArray[2]++;
                 } else {
+                    closestDistance = Math.min(losResult.distance, closestDistance);
                     losFlag = true;
                     coverArray[losResult.cover]++;
                 }
             }
         }
 
-        if (losFlag === false) {
-            sendChat("","No One has LOS");
-        } else {
-            let max = 0;
-            let level = 0;
-            for (let c=0;c<3;c++) {
-                if (coverArray[c] > max) {
-                    max = coverArray[c];
-                    level = c;
-                }
+        let max = 0;
+        let level = 0;
+        for (let c=0;c<3;c++) {
+            if (coverArray[c] > max) {
+                max = coverArray[c];
+                level = c;
             }
-            sendChat("","Average Cover Level is " + level);
         }
 
 
 
+        let result = {
+            distance: closestDistance,
+            los: losFlag,
+            cover: level,
+        }
 
-
+        return result;
     }
-
-    const TestGroupLOS = (msg) => {
-        let startTime = Date.now();
-
-        let Tag = msg.content.split(";");
-        let shooter = ModelArray[Tag[1]];
-        let shooterUnit = UnitArray[shooter.unitID];
-        let target = ModelArray[Tag[2]];
-        let targetUnit = UnitArray[target.unitID];
-        GroupLOS(shooterUnit,targetUnit);
-
-        let elapsed = Date.now()-startTime;
-        log("Test Group LOS in " + elapsed/1000 + " seconds");
-
-    }
-
-
 
 
 
     const CheckLOS = (msg) => {
         let Tag = msg.content.split(";");
-        let shooterID = Tag[1];
-        let targetID = Tag[2];
-        let shooter = ModelArray[shooterID];
+        let shooter = ModelArray[Tag[1]];
+        let shooterUnit = UnitArray[shooter.unitID];
+        let target = ModelArray[Tag[2]];
+        let targetUnit = UnitArray[target.unitID];
         let coverLevels = ["No","Light","Hard"];
         if (!shooter) {
             sendChat("","Not valid shooter");
             return;
         }
-        let target = ModelArray[targetID];
         if (!target) {
             sendChat("","Not valid target");
             return;
         }
         SetupCard(shooter.name,"LOS",shooter.faction);
-        let losResult = LOS(shooter,target);
-        let distance = losResult.distance
-        let s = (distance === 1) ? "":"es";
-        outputCard.body.push("Distance: " + distance + " Hex" + s);
+
+        let losResult = GroupLOS(shooterUnit,targetUnit);
+        
+        //outputCard.body.push("Distance: " + distance + " Hex" + s);
         if (losResult.los === false) {
-            outputCard.body.push("[#ff0000]No LOS to Target[/#]");
-            outputCard.body.push(losResult.losReason);
+            outputCard.body.push("[#ff0000]No LOS to Target Unit[/#]");
+            //outputCard.body.push(losResult.losReason);
         } else {
-            outputCard.body.push("Shooter has LOS to Target");
-            outputCard.body.push("Target has " + coverLevels[losResult.cover] + " Cover");
-            //outputCard.body.push("Target is in the " + losResult.shooterFacing + " Arc");
-            //outputCard.body.push("Target is being hit on the " + losResult.targetFacing + " Arc");
-
-
-
+            outputCard.body.push("LOS to Target");
+            outputCard.body.push("Distance between Units: " + losResult.distance + "  Hexes");
+            outputCard.body.push("Target Unit has " + coverLevels[losResult.cover] + " Cover");
         }
 
 
@@ -2457,6 +2441,7 @@ log(result)
                 })
                 //add new occupied hexes and update labels and cubes
                 model.cubes = cube.radius(this.size + 1);
+                model.cube = cube;
                 model.label = label;
                 model.labels = model.cubes.map((e) => e.label());
                 _.each(model.labels,label => {
