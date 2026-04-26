@@ -699,7 +699,7 @@ const XR = (() => {
             this.token = token;
             this.unitID = "";
             this.cube = cube;
-            this.cubes = cube.radius(this.size + 1);
+            this.cubes = cube.radius(this.size);
             this.labels = this.cubes.map((e) => e.label());
             _.each(this.labels,label => {
                 HexMap[label].tokenIDs.push(this.id);
@@ -714,9 +714,8 @@ const XR = (() => {
         ClosestHex = (model2) => {
             let closest = Infinity;
             let h1,h2;
-            let cubes1 = this.cube.radius(this.size); 
-            let cubes2 = model2.cube.radius(model2.size);
-
+            let cubes1 = this.cube.radius(this.size - 1); 
+            let cubes2 = model2.cube.radius(model2.size - 1);
             _.each(cubes1, cube1 => {
                 _.each(cubes2,cube2 => {
                     let d = cube1.distance(cube2);
@@ -728,7 +727,7 @@ const XR = (() => {
                 })
             })
             let result = {
-                distance: closest,
+                distance: closest - 1,
                 hexLabel1: h1,
                 hexLabel2: h2,
             }
@@ -1594,48 +1593,13 @@ log(hex)
         outputCard.body.push("Elevation: " + hex.elevation);
         let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
         outputCard.body.push("Cover: " + cover);
-
+        outputCard.body.push("Size: " + model.size);
         
+
+
         PrintCard();
     }
 
-
-    const BlastCheck = (targetCentre,model,radius) => {
-        radius = radius * HexInfo.size * 2;
-        let modelCentre = HexMap[model.label].centre;
-        let theta = Angle(model.token.get("rotation")) * Math.PI/180;
-        let w = model.token.get("width");
-        let h = model.token.get("height");
-        let squareTokens = ["Infantry","Mortar"]; //tokens without a direction triangle
-        if (squareTokens.includes(model.type) === false) {
-            h -= 10;    
-        }
-        dXmin = modelCentre.x - (w/2);
-        dXmax = modelCentre.x + (w/2);
-        dYmin = modelCentre.y - (h/2);
-        dYmax = modelCentre.y + (h/2);
-        scale = pageInfo.scale;
-        cX = (Math.cos(theta) * (targetCentre.x - modelCentre.x)) - (Math.sin(theta)*(targetCentre.y - modelCentre.y)) + modelCentre.x
-        cY = (Math.sin(theta) * (targetCentre.x - modelCentre.x)) + (Math.cos(theta)*(targetCentre.y - modelCentre.y)) + modelCentre.y
-        //closest point
-        eX = Clamp(cX,dXmin,dXmax)
-        eY = Clamp(cY,dYmin,dYmax)
-
-        A = (eX - cX)
-        B = (eY - cY)
-        
-        let caught = false;
-        C = Math.sqrt(A*A + B*B)
-        C = Math.round(C/70)*scale
-        if (C<=radius) {
-            caught = true
-        }
-        return caught;
-    }
-
-    const Clamp = (val,min,max) => {
-        return (val>max) ? max:(val <min) ? min: val;
-    }
 
 
     const DrawLine = (hex1,hex2) => {
@@ -2440,7 +2404,7 @@ log(result)
                     }
                 })
                 //add new occupied hexes and update labels and cubes
-                model.cubes = cube.radius(this.size + 1);
+                model.cubes = cube.radius(this.size);
                 model.cube = cube;
                 model.label = label;
                 model.labels = model.cubes.map((e) => e.label());
