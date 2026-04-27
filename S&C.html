@@ -153,13 +153,13 @@
     on("change:attrs sheet:opened", function() { 
         getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne"], function(values) {
             let notes = [];
-            if (value.radio === "1") {notes.push("Radio Equipped")};
-            if (value.deployed === "1") {notes.push("Deployed")};
-            if (value.deployed2 === "1") {notes.push("Deployed 2")};
-            if (value.indirect === "1") {notes.push("Indirect Fire")};
-            if (value.transport === "1") notes.push("Transport");
-            if (value.openTopped === "1") {notes.push("Open Topped")};
-            if (value.airborne === "1") {notes.push("Airborne")};
+            if (values.radio === "1") {notes.push("Radio Equipped")};
+            if (values.deployed === "1") {notes.push("Deployed")};
+            if (values.deployed2 === "1") {notes.push("Deployed 2")};
+            if (values.indirect === "1") {notes.push("Indirect Fire")};
+            if (values.transport === "1") notes.push("Transport");
+            if (values.openTopped === "1") {notes.push("Open Topped")};
+            if (values.airborne === "1") {notes.push("Airborne")};
 
             setAttrs({
                 "notes0": notes[0],
