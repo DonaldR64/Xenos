@@ -1,0 +1,158 @@
+<input type="hidden" class="sheet-tabstoggle" name="attr_sheetTab"  value="display"  />
+<div>
+    <button type="action" name="act_input" >Input</button>
+    <button type="action" name="act_display" >Display</button>
+</div>
+
+<div class="sheet-input">
+    <div class="2colrow">
+        <div class="col">
+            <h3>Unit Information</h3>
+            <label>Name:</label><input type="text" name="attr_character_name">
+            <br>
+            <label for="attr_type">Type:</label>
+            <select name="attr_type">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="Infantry">Infantry Team</option>
+                <option value="Heavy Infantry">Support Team</option>
+                <option value="Light Infantry">Vehicle</option>
+                <option value="Berserk Infantry">Gun</option>
+                <option value="Support Infantry">Aircraft</option>
+            </select>
+            <br>
+            <label for="attr_faction">Faction:</label>
+            <select name="attr_faction">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="US Army">US Army</option>
+                <option value="Wermacht">Wermacht</option>
+            </select>
+            <br>
+            <label for="attr_experience">Experience:</label>
+            <select name="attr_experience">
+                <option value="Experienced" selected>Experienced</option>
+                <option value="Green">Green</option>
+                <option value="Veteran">Veteran</option>
+            </select>
+        </div>
+        <div class="col">
+            <h3>Attributes</h3>
+            <label>Armour:</label><input type="text" name="attr_armour">
+            <label>Movement:</label><input type="text" name="attr_move">
+        </div>
+        <div class="col">
+            <label>Weapon 1 Name:</label><input type="text" name="attr_weapon1Name">
+            <label>Weapon 1 Dice:</label><input type="text" name="attr_weapon1Dice">
+            <label>Weapon 1 Attack:</label><input type="text" name="attr_weapon1Attack">
+            <label>Weapon 1 Sound:</label><input type="text" name="attr_weapon1Sound">
+        </div>
+        <div class="col">
+            <label>Weapon 2 Name:</label><input type="text" name="attr_weapon2Name">
+            <label>Weapon 2 Dice:</label><input type="text" name="attr_weapon2Dice">
+            <label>Weapon 2 Attack:</label><input type="text" name="attr_weapon2Attack">
+            <label>Weapon 2 Sound:</label><input type="text" name="attr_weapon2Sound">
+        </div>
+        <div class="col">
+            <label>Radio:</label><input type="checkbox" name="attr_radio" value="1">
+            <label>Deployed:</label><input type="checkbox" name="attr_deployed" value="1">
+            <label>Deployed 2:</label><input type="checkbox" name="attr_deployed2" value="1">
+            <label>Indirect Fire:</label><input type="checkbox" name="attr_indirect" value="1">
+            <label>Transport:</label><input type="checkbox" name="attr_transport" value="1">
+            <label>Open Topped:</label><input type="checkbox" name="attr_openTopped" value="1">
+            <label>Airborne:</label><input type="checkbox" name="attr_airborne" value="1">
+
+        </div>
+
+    </div>    
+
+
+</div>
+
+
+
+<div class="sheet-display">
+        <input type="hidden" name="attr_faction"/>
+          <section class="header f-center">
+            <h1><span name="attr_character_name"></span></h1>
+            <h3><span name="attr_faction"></span></h3>
+            <h3><span name="attr_experience"></span> <span name="attr_type"></span></h3>
+            <h3><span name="attr_notes"></span></h3>
+          </section>
+
+          <section class="common f-center">
+              <img alt="Character Avatar" name="attr_character_avatar" style="width:600px;height:auto; bottom: 0;"/>
+          </section>
+
+          <section class="attr">
+            <h3>Stats</h3>
+            <div class="attrinfo">
+                <h4>Armour</h4>
+                <h4>Move</h4>
+                <h4 style="color: darkred;"><span name="attr_armour"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_move"></span></h4>
+            </div>
+          </section>
+          <section class="weapons">
+            <h3>Weapons</h3>
+            <div class="weaponinfo">
+                <h4>Name</h4>
+                <h4>Dice</h4>
+                <h4>Attack</h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1Name"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1Range"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon1Special"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2Name"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2Range"></span></h4>
+                <h4 style="color: darkred;"><span name="attr_weapon2Special"></span></h4>
+            </div>
+          </section>
+          <section class="spec">
+            <h3>Notes</h3>
+            <h4 style="color: darkred;"><span name="attr_notes"></span></h4>
+          </section>
+
+        </main>
+      </div>
+    </div>    
+</div>
+
+
+
+
+
+
+
+<script type="text/worker">
+    const buttonlist = ["input","display"];
+    buttonlist.forEach(button => {
+        on(`clicked:${button}`, function() {
+            setAttrs({
+                sheetTab: button
+            });
+        });
+    });
+    
+    on("sheet:opened", function() {
+        setAttrs({sheetTab:"display"});
+    });
+
+
+    on("change:attrs sheet:opened", function() { 
+        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne"], function(values) {
+            let notes = [];
+            if (values.radio === "1") {notes.push("Radio Equipped")};
+            if (values.deployed === "1") {notes.push("Deployed")};
+            if (values.deployed2 === "1") {notes.push("Deployed 2")};
+            if (values.indirect === "1") {notes.push("Indirect Fire")};
+            if (values.transport === "1") {notes.push("Transport")};
+            if (values.openTopped === "1") {notes.push("Open Topped")};
+            if (values.airborne === "1") {notes.push("Airborne")};
+            notes = notes.toString() || " ";
+            setAttrs({
+                "notes": notes,
+            });
+        });    
+    });  
+
+
+
+</script>
