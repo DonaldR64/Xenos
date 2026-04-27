@@ -13,11 +13,11 @@
             <label for="attr_type">Type:</label>
             <select name="attr_type">
                 <option value="" selected disabled hidden>Choose here</option>
-                <option value="Infantry">Infantry Team</option>
-                <option value="Heavy Infantry">Support Team</option>
-                <option value="Light Infantry">Vehicle</option>
-                <option value="Berserk Infantry">Gun</option>
-                <option value="Support Infantry">Aircraft</option>
+                <option value="Infantry Team">Infantry Team</option>
+                <option value="Support Team">Support Team</option>
+                <option value="Vehicle">Vehicle</option>
+                <option value="Gun">Gun</option>
+                <option value="Aircraft">Aircraft</option>
             </select>
             <br>
             <label for="attr_faction">Faction:</label>
@@ -79,8 +79,8 @@
         <input type="hidden" name="attr_faction"/>
           <section class="header f-center">
             <h1><span name="attr_character_name"></span></h1>
-            <h3><span name="attr_experience"></span> <span name="attr_faction"></span> <span name="attr_type"></span></h3>
-            <h3><span name="attr_notes"></span></h3>
+            <h3><span name="attr_faction"></span> <span name="attr_type"></span></h3>
+            <h3><span name="attr_experience"></span></h3>
           </section>
 
           <section class="common f-center">
@@ -96,6 +96,14 @@
                 <h4 style="color: darkred;"><span name="attr_move"></span></h4>
             </div>
           </section>
+
+          <section class="notes">
+            <h3>Notes</h3>
+            <h4 style="color: darkred;"><span name="attr_notes"></span></h4>
+          </section>
+
+
+
 
           <section class="weapon">
             <h3>Weapons</h3>
@@ -149,6 +157,7 @@
             if (values.openTopped === "1") {notes.push("Open Topped")};
             if (values.airborne === "1") {notes.push("Airborne")};
             notes = notes.toString() || " ";
+            notes = notes.replace(",","<br>");
             setAttrs({
                 "notes": notes,
             });
