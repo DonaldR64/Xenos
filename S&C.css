@@ -38,9 +38,10 @@ main {
   height: 800px;
   grid-gap: 4px;
   grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
   grid-template-areas:"header   header    header   header"
                       "common   common    common   stats"
+                      "common   common    common   notes"
                       "common   common    common   notes"
                       "weapon   weapon    weapon   weapon";
 }
