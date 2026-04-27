@@ -2587,6 +2587,7 @@ log(result)
     
         switch(args[0]) {
             case '!Dump':
+                log(HexInfo)
                 log("State");
                 log(state.XR);
                 log("Models");
