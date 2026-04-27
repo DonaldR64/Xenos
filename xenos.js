@@ -2592,8 +2592,8 @@ log(result)
                 log(state.XR);
                 log("Models");
                 log(ModelArray);
-                log("Platoons");
-                log(PlatoonArray)
+                log("Units");
+                log(UnitArray)
                 break;
             case '!ClearState':
                 ClearState(msg);
