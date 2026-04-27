@@ -39,15 +39,15 @@ input[type="hidden"][name="attr_faction"][value="Wermacht"] ~ .mysheet {
 main {
   display: grid;
   width: 800px;
-  height: 550px;
+  height: 800px;
   grid-gap: 4px;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
-  grid-template-areas:"header header header"
-                      "common common attr"
-                      "common common attr"
-                      "weapons   weapons   weapons"
-                      "weapons   weapons    weapons";
+  grid-template-areas:"header     header    header   header"
+                      "common   common    common   attr"
+                      "common   common    common   attr"
+                      "weapon   weapon    weapon   weapon"
+                      "weapon   weapon    weapon   weapon";
 }
 
 
@@ -151,8 +151,8 @@ input[type="hidden"][name="attr_faction"]:is([value="US Army"],[value="Space Wol
   align-items: center;
 }
 
-.weapons {
-  grid-area: weapons;
+.weapon {
+  grid-area: weapon;
   background-color: white;
   align-items: center;
 }
