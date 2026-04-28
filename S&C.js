@@ -661,10 +661,11 @@ const XR = (() => {
             this.experience = aa.experience || "Experienced";
             this.armour = parseInt(aa.armour);
             this.move = parseInt(aa.move);
-            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne"];
+            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at"];
             _.each(notes,note => {
                 this[note] = (aa[note] === "1") ? true:false;
             })
+            this.mode = aa.mode;
 
             let weapons = [];
             for (let i=1;i<3;i++) {
