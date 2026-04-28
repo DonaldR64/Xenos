@@ -135,7 +135,12 @@ const XR = (() => {
 
 
 
+    const EdgeInfo = {
 
+
+
+
+    }
 
 
 
@@ -596,6 +601,10 @@ const XR = (() => {
             this.cover = 0;
             this.infantry = 0;
             this.blockLOS = false;
+            this.edges = {};
+            _.each(DIRECTIONS,a => {
+                this.edges[a] = "Open";
+            });
             HexMap[this.label] = this;
         }
     }
@@ -955,9 +964,9 @@ const XR = (() => {
                 halfToggleY = -halfToggleY;
             }
         }
-        AddElevations();
+        //AddElevations();
         AddTerrain();    
-        AddTokens();
+        //AddTokens();
 
 
         let elapsed = Date.now()-startTime;
@@ -971,34 +980,65 @@ const XR = (() => {
 
 
 
+    //terrain that is edges - hedges, walls, barricades and such
+    const AddEdges = () => {
+        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
+        _.each(paths,path => {
+            let type = EdgeInfo[path.get("stroke").toLowerCase()];
+            if (type) {
+                let vertices = translatePoly(path);
+                //work through pairs of vertices
+                for (let i=0;i<(vertices.length -1);i++) {
+                    let pt1 = vertices[i];
+                    let pt2 = vertices[i+1];
+                    let midPt = new Point((pt1.x + pt2.x)/2,(pt1.y + pt2.y)/2);
+                    //find nearest hex to midPt
+                    let hexLabel = midPt.label();
+                    //now run through that hexes neighbours and see what intersects with original line to identify the 2 neighbouring hexes
+                    let hex1 = HexMap[hexLabel];
+                    if (!hex1) {continue}
+                    let pt3 = hex1.centre;
+                    let neighbourCubes = hex1.cube.neighbours();
+                    for (let j=0;j<neighbourCubes.length;j++) {
+                        let k = j+3;
+                        if (k> 5) {k-=6};
+                        let hl2 = neighbourCubes[j].label();
+                        let hex2 = HexMap[hl2];
+                        if (!hex2) {continue}
+                        let pt4 = hex2.centre;
+                        let intersect = lineLine(pt1,pt2,pt3,pt4);
+                        if (intersect) {
+                            //dont overwrite bridges
+                            if (hex1.edges[DIRECTIONS[j]].name !== "Bridge") {
+                                hex1.edges[DIRECTIONS[j]] = type;
+                            }
+                            if (hex2.edges[DIRECTIONS[k]].name !== "Bridge") {
+                                hex2.edges[DIRECTIONS[k]] = type;
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+
+
     const AddTerrain = () => {
-
-
-
-
-        //part 1 - add terrain that is tokens - woods, rubble
-        //add terrain using tokens on map page, either on top or under map
+        //part 1 - add hex terrain
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
         _.each(tokens,token => {
             let name = token.get("name");
+            name = name.split(" ")[0];
 
-
-            //part 1 - add terrain that is tokens - woods, rubble
             let terrain = TerrainInfo[name];
             if (terrain) {
 //log(terrain)
                 let centre = new Point(token.get("left"),token.get('top'));
                 let centreLabel = centre.toCube().label();
                 let hex = HexMap[centreLabel];
-                if (hex.terrain === "Open") {
-                    hex.terrain = name;
-                } else {
-                    hex.terrain += ", " + terrain.name;
-                }
-                hex.height = Math.max(hex.height,terrain.height);
-                hex.los = terrain.los;
-                hex.cover = Math.max(hex.cover,terrain.cover);
-                hex.move = Math.max(hex.move,terrain.move);
+                hex = Object.assign(hex, terrain);
+                HexMap[centrelabel] = hex;
             } 
 
 
@@ -1012,27 +1052,13 @@ const XR = (() => {
 
 
 
-        //part 2 - add buildings, defined by paths
+        //part 2 - add hedges and such, defined by paths
         let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
 
         _.each(paths,path => {
-            let terrain = BuildingInfo[path.get("stroke").toLowerCase()];
-            if (terrain) {
-                let vertices = translatePoly(path);
-                _.each(HexMap,hex => {
-                    let result = pointInPolygon(hex.centre,vertices);
-                    if (result === true) {
-                        if (hex.terrain === "Open") {
-                            hex.terrain = terrain.name;
-                        } else {
-                            hex.terrain += ", " + terrain.name;
-                        }
-                        hex.height = Math.max(hex.height,terrain.height);
-                        hex.losLevel = Math.max(hex.losLevel,terrain.losLevel);
-                        hex.cover = Math.max(hex.cover,terrain.cover);
-                        hex.move = Math.max(hex.move,terrain.move);
-                    }
-                });
+            let edge = EdgeInfo[path.get("stroke").toLowerCase()];
+            if (edge) {
+
             }
         })
 
@@ -2363,11 +2389,9 @@ log(result)
     
         switch(args[0]) {
             case '!Dump':
-                log(HexInfo)
+                log(HexMap)
                 log("State");
                 log(state.SC);
-                log("Models");
-                log(ModelArray);
                 log("Units");
                 log(UnitArray)
                 break;
@@ -2437,7 +2461,7 @@ log(result)
         on('destroy:graphic',destroyGraphic);
     };
     on('ready', () => {
-        log("===>Xenos Rampant<===");
+        log("===>Stars and Crosses<===");
         log("===> Software Version: " + version + " <===")
         LoadPage();
         DefineHexInfo();
