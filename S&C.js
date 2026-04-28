@@ -642,7 +642,7 @@ const XR = (() => {
             }
             this.player = (this.faction === "Neutral") ? 2:(state.SC.factions[0] === this.faction)? 0:1;
             this.type = aa.type;
-            this.experience = aa.experience;
+            this.experience = aa.experience || "Experienced";
             this.armour = parseInt(aa.armour);
             this.move = parseInt(aa.move);
             let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne"];
@@ -685,6 +685,12 @@ const XR = (() => {
 
 
     }
+
+
+
+
+
+
 
 
 
@@ -788,7 +794,8 @@ const XR = (() => {
         if (!table) {
             table = findObjs({type:'rollabletable', name: "Neutral"})[0];
         }
-        let obj = findObjs({type:'tableitem', _rollabletableid: table.id, name: roll })[0];        
+        let obj = findObjs({type:'tableitem', _rollabletableid: table.id, name: roll })[0];   
+        if (!obj) {return "NA"}
         let avatar = obj.get('avatar');
         let out = "<img width = "+ size + " height = " + size + " src=" + avatar + "></img>";
         return out;
@@ -1154,7 +1161,73 @@ const XR = (() => {
     }
  
 
+    const InitiativeCheck = (msg) => {
+        //HQ and Radio dont have this macro
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        SetupCard(unit.name,"Command Initiative",unit.faction);
+        let pass = false;
+        let line = false;
 
+        let hex = HexMap[unit.label];
+        let ids = hex.tokenIDs;
+        _.each(ids,id2 => {
+            if (id2 !== id) {
+                let unit2 = UnitArray[id2];
+                if (unit2.hq === true) {
+                    outputCard.body.push("In Hex with HQ Unit");
+                    pass = true;
+                } else if (unit2.radio === true) {
+                    outputCard.body.push("In Hex with Radio Unit");
+                    pass = true;
+                } else if (unit2.line === true) {
+                    line = id2;
+                }
+            }
+        })
+        let hexes = hex.cube.neighbours();
+        _.each(hexes,hex2 => {
+            let ids = hex2.tokenIDs;
+            _.each(ids,id2 => {
+                let unit2 = UnitArray[id2];
+                if (unit2.hq === true) {
+                    outputCard.body.push("Adjacent to HQ Unit");
+                    pass = true;
+                }            
+            })
+        })
+
+        // in hex iwth field line marker with link
+
+
+
+        
+        
+
+
+
+
+        if (pass === false) {
+            let roll = randomInteger(6);
+            let target = 5;
+            if (unit.experience === "Experienced") {target = 4};
+            if (unit.experience === "Veteran") {target = 3};
+            outputCard.body.push(DisplayDice(roll,unit.faction,32) + " vs. " + target + "+");
+            outputCard.body.push("Experience Level: " + unit.experience);
+            if (roll >= target) {
+                pass = true;
+            }
+        }
+
+        if (pass === true) {
+            outputCard.body.push("Passed, Unit and any associated Units can move");
+        } else {
+            outputCard.body.push("[#ff0000]Failed, Unit cannot move[/#]");
+        }
+        PrintCard();
+    }
 
 
 
@@ -1222,7 +1295,7 @@ log(hex)
 
     const RollDice = (msg) => {
         PlaySound("Dice");
-        let roll = randomInteger(8);
+        let roll = randomInteger(6);
         let playerID = msg.playerid;
         let id,model,player;
         if (msg.selected) {
@@ -1235,13 +1308,13 @@ log(hex)
             return;
         }
         if (id) {
-            model = ModelArray[id];
-            if (model) {
-                faction = model.faction;
-                player = model.player;
+            unit = UnitArray[id];
+            if (unit) {
+                faction = unit.faction;
+                player = unit.player;
             }
         }
-        if ((!id || !model) && playerID) {
+        if ((!id || !unit) && playerID) {
             faction = state.SC.players[playerID];
             player = (state.SC.factions[0] === faction) ? 0:1;
         }
@@ -1564,7 +1637,9 @@ log(hex)
             case '!AddAbilities':
                 AddAbilities(msg);
                 break;
-
+            case '!InitiativeCheck':
+                InitiativeCheck(msg);
+                break;
 
             case '!SetupGame':
                 SetupGame(msg);
