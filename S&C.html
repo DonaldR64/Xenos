@@ -75,7 +75,10 @@
                 <option value="Half-Track">Half-Track</option>
                 <option value="Tracked">Tracked</option>
             </select>
-
+            <label>Sniper:</label><input type="checkbox" name="attr_sniper" value="1">
+            <br>
+            <label>AT Weapon:</label><input type="checkbox" name="attr_at" value="1">
+            <br>
 
         </div>
 
@@ -192,7 +195,8 @@
             if (values.hq === "1") {notes.push("HQ Unit")};
             if (values.line === "1") {notes.push("Field Line")};
             if (values.mode !== "") {notes.push(values.mode)};
-
+            if (values.sniper === "1") {notes.push("Sniper")};            
+            if (values.at === "1") {notes.push("AT Team")};
 
 
             setAttrs({
