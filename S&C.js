@@ -1,5 +1,5 @@
 const XR = (() => {
-    const version = '2026.4.24';
+    const version = '2026.4.27';
     if (!state.SC) {state.SC = {}};
 
     const pageInfo = {};
