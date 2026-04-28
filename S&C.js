@@ -110,7 +110,13 @@ const XR = (() => {
 
 
     const SM = {
-        //moved, flanked -1, -2, shot
+        veteran: "status_letters_and_numbers0222::5982341",
+        green: "status_letters_and_numbers0057::5982175",
+        moved: "status_Advantage-or-Up::2006462",
+        flanked1: "status_letters_and_numbers0228::5982146",
+        flanked2: "status_letters_and_numbers0229::5982147",
+        shot: "status_Shell::5553215",
+
     }
 
     const Capit = (val) => {
@@ -126,7 +132,7 @@ const XR = (() => {
         "Road": {name: "Road", type: "Road", infantry: 0, cover: 0, blockLOS: false},
         "Orchard": {name: "Orchard", type: "Open", infantry: 1, cover: -1, blockLOS: false},
         "Farmhouse": {name: "Farmhouse", type: "Open", infantry: 2, cover: -3, blockLOS: true},
-        "Ploughed": {name: "Ploughed Field", type: "Soft", infantry: 0, cover: 0, blockLOS: false},
+        "Ploughed": {name: "Ploughed Fields", type: "Soft", infantry: 0, cover: 0, blockLOS: false},
 
 
 
@@ -136,7 +142,7 @@ const XR = (() => {
 
 
     const EdgeInfo = {
-
+        "#93c47d": "Bocage",
 
 
 
@@ -595,7 +601,7 @@ const XR = (() => {
             this.cube = offset.toCube();
             this.label = offset.label();
             this.elevation = 0;
-            this.terrain = "Offboard";
+            this.name = "Offboard";
             this.type = "Offboard"
             this.cover = 0;
             this.infantry = 0;
@@ -666,7 +672,9 @@ const XR = (() => {
             this.cube = cube;
             this.label = label;
 
-            ModelArray[id] = this;
+            UnitArray[id] = this;
+            HexMap[label].tokenIDs.push(id);
+
 
         }
 
@@ -965,7 +973,7 @@ const XR = (() => {
         }
         //AddElevations();
         AddTerrain();    
-        //AddTokens();
+        AddTokens();
 
 
         let elapsed = Date.now()-startTime;
@@ -974,13 +982,24 @@ const XR = (() => {
 
 
 
+    const AddTerrain = () => {
+        //part 1 - add hex terrain
+        let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
+        _.each(tokens,token => {
+            let name = token.get("name");
+            name = name.split(" ")[0];
+            let terrain = TerrainInfo[name];
+            if (terrain) {
+//log(terrain)
+                let centre = new Point(token.get("left"),token.get('top'));
+                let centreLabel = centre.toCube().label();
+                let hex = HexMap[centreLabel];
+                hex = Object.assign(hex, terrain);
+                HexMap[centreLabel] = hex;
+            }
+        })
 
-
-
-
-
-    //terrain that is edges - hedges, walls, barricades and such
-    const AddEdges = () => {
+        //part 2 - add hedges and such, defined by paths
         let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
         _.each(paths,path => {
             let type = EdgeInfo[path.get("stroke").toLowerCase()];
@@ -1007,58 +1026,13 @@ const XR = (() => {
                         let pt4 = hex2.centre;
                         let intersect = lineLine(pt1,pt2,pt3,pt4);
                         if (intersect) {
-                            //dont overwrite bridges
-                            if (hex1.edges[DIRECTIONS[j]].name !== "Bridge") {
-                                hex1.edges[DIRECTIONS[j]] = type;
-                            }
-                            if (hex2.edges[DIRECTIONS[k]].name !== "Bridge") {
-                                hex2.edges[DIRECTIONS[k]] = type;
-                            }
+                            hex1.edges[DIRECTIONS[j]] = type;
+                            hex2.edges[DIRECTIONS[k]] = type;
                         }
                     }
                 }
             }
         })
-    }
-
-
-
-    const AddTerrain = () => {
-        //part 1 - add hex terrain
-        let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
-        _.each(tokens,token => {
-            let name = token.get("name");
-            name = name.split(" ")[0];
-            let terrain = TerrainInfo[name];
-            if (terrain) {
-//log(terrain)
-                let centre = new Point(token.get("left"),token.get('top'));
-                let centreLabel = centre.toCube().label();
-                let hex = HexMap[centreLabel];
-                hex = Object.assign(hex, terrain);
-                HexMap[centreLabel] = hex;
-            }
-        })
-
-
-
-
-
-        //part 2 - add hedges and such, defined by paths
-        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
-
-        _.each(paths,path => {
-            let edge = EdgeInfo[path.get("stroke").toLowerCase()];
-            if (edge) {
-
-            }
-        })
-
-
-
-
-
-
     }
 
     const AddElevations = () => {
@@ -1097,20 +1071,12 @@ const XR = (() => {
         
         tokens.forEach((token) => {
             let character = getObj("character", token.get("represents"));   
-            let gmn = decodeURIComponent(token.get("gmnotes")).toString();
-            if (gmn) {
-                let model = new Model(token.get("id"))
-                let unit = UnitArray[gmn];
-                if (!unit) {
-                    unit = new Unit(token.get("id"),gmn);
-                    unit.name = state.SC.unitInfo[gmn].name;
-                }
-                unit.AddModel(model.id);
+            if (character) {
+                let unit = new Unit(token.get("id"));
             }
         });
         let elapsed = Date.now()-start;
-        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(ModelArray).length + " placed in Model Array");
-
+        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(UnitArray).length + " placed in Unit Array");
     }
 
 
@@ -1365,21 +1331,25 @@ log(explored)
     const TokenInfo = (msg) => {
         if (!msg.selected) {return};
         let id = msg.selected[0]._id;
-        let model = ModelArray[id];
-        if (!model) {return};
-        SetupCard(model.name,"",model.faction);
-        let hex = HexMap[model.label];
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        SetupCard(unit.name,"",unit.faction);
+        let hex = HexMap[unit.label];
 log(hex)
-
-        outputCard.body.push("Hex: " + model.label);
-        outputCard.body.push("Terrain: " + hex.terrain);
+        outputCard.body.push("Hex: " + unit.label);
+        outputCard.body.push("Terrain Name: " + hex.name);
+        outputCard.body.push("Movement Type: " + hex.type);
         outputCard.body.push("Elevation: " + hex.elevation);
-        let cover = (hex.cover === 0) ? "None":(hex.cover === 1) ? "Light":"Hard";
-        outputCard.body.push("Cover: " + cover);
-        outputCard.body.push("Size: " + model.size);
-        
-
-
+        outputCard.body.push("Infantry Armour: " + hex.infantry);
+        outputCard.body.push("Cover Modifier: " + hex.cover);
+        if (hex.blockLOS === true) {
+            outputCard.body.push("Hex Blocks LOS");
+        }
+        _.each(DIRECTIONS,a => {
+            if (hex.edges[a] !== "Open") {
+                outputCard.body.push("The " + a + " Edge has " + hex.edges[a]);
+            }
+        });
         PrintCard();
     }
 
@@ -1417,14 +1387,6 @@ log(hex)
 
         
     }
-
-    const RemoveLines = () => {
-        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "foreground",});
-        _.each(paths,path => {
-            path.remove();
-        })
-    }
-
 
     const RollDice = (msg) => {
         PlaySound("Dice");
@@ -1507,14 +1469,9 @@ log(hex)
             playerIDs: ["",""],
             players: {},
             factions: ["",""],
-            unitNum: [0,0],
-            unitInfo: {},
-            lines: [],
             turn: 0,
-            activePlayer: -1,
-            firstPlayer: -1,
-            commanderID: ["",""],
-            gamePoints: 0, //eg 24 points
+
+
         }
         BuildMap();
         sendChat("","Cleared State/Arrays");
@@ -2299,53 +2256,39 @@ log(result)
 
 
     const changeGraphic = (tok,prev) => {
-        //RemoveLines();
-        let model = ModelArray[tok.id];
-        if (model) {
+        let unit = UnitArray[tok.id];
+        if (unit) {
             let cube = (new Point(tok.get("left"),tok.get("top"))).toCube();
             let label = cube.label();
             let prevLabel = (new Point(prev.left,prev.top)).label();
-            if (label !== model.label || tok.get("rotation") !== prev.rotation) {
-                log(model.name + ' is moving from ' + prevLabel + ' to ' + label)
+            if (label !== prevLabel) {
+                log(unit.name + ' is moving from ' + prevLabel + ' to ' + label)
                 //remove old occupied hexes
-                _.each(model.labels,l => {
-                    let index = HexMap[l].tokenIDs.indexOf(model.id);
-                    if (index > -1) {
-                        HexMap[l].tokenIDs.splice(index,1);
-                    }
-                })
-                //add new occupied hexes and update labels and cubes
-                model.cubes = cube.radius(this.size);
-                model.cube = cube;
-                model.label = label;
-                model.labels = model.cubes.map((e) => e.label());
-                _.each(model.labels,label => {
-                    HexMap[label].tokenIDs.push(this.id);
-                })
-                //centre in the hex
-                model.token.set({
-                    left: HexMap[label].centre.x,
-                    top: HexMap[label].centre.y,
-                })
+                let index = HexMap[prevLabel].tokenIDs.indexOf(unit.id);
+                if (index > -1) {
+                    HexMap[prevLabel].tokenIDs.splice(index,1);
+                }
+                //place in new hex
+                if (HexMap[label].tokenIDs.includes(unit.id) === false) {
+                    HexMap[label].tokenIDs.push(unit.id);
+                }
+                unit.label = label;
+                unit.cube = cube;
+            }
+        } else {
+            let character = getObj("character", tok.get("represents"));   
+            if (character) {
+                let unit = new Unit(tok.get("id"));
+                log(unit.name + " was added to array")
             }
         }
-    }
-
-
-    const addGraphic = (obj) => {
-        log(obj)
-        RemoveLines();
-
-
-
-
     }
     
     const destroyGraphic = (obj) => {
         let name = obj.get("name");
         log(name + " Destroyed")
-        if (ModelArray[obj.get("id")]) {
-            delete ModelArray[obj.get("id")];
+        if (UnitArray[obj.get("id")]) {
+            delete UnitArray[obj.get("id")];
         }
 
 
@@ -2417,22 +2360,13 @@ log(result)
         }
     };
 
-    function displayCurrentTime() {
-        let now = new Date();
-        let hours = String(now.getHours()).padStart(2, '0');
-        let minutes = String(now.getMinutes()).padStart(2, '0');
-        hours -= 5; //GMT to EST
-        ampm = hours > 12 ? " PM":" AM";
-        hours = hours > 12 ? hours-12:hours;
-        let time = hours + ":" + minutes + ampm
-        return time
-    }
+   
 
 
 
     const registerEventHandlers = () => {
         on('chat:message', handleInput);
-        on("add:graphic", addGraphic);
+        //on("add:graphic", addGraphic);
         on('change:graphic',changeGraphic);
         on('destroy:graphic',destroyGraphic);
     };
@@ -2443,7 +2377,7 @@ log(result)
         DefineHexInfo();
         BuildMap();
         registerEventHandlers();
-        sendChat("","API Ready at " + displayCurrentTime());
+        sendChat("","API Ready at " + new Date().toLocaleTimeString("en-US", {timeZone: "America/Toronto"}) + " EST");
         log("On Ready Done")
     });
     return {
