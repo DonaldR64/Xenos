@@ -1038,7 +1038,7 @@ const XR = (() => {
                 let centreLabel = centre.toCube().label();
                 let hex = HexMap[centreLabel];
                 hex = Object.assign(hex, terrain);
-                HexMap[centrelabel] = hex;
+                HexMap[centreLabel] = hex;
             } 
 
 
