@@ -162,11 +162,11 @@
             if (values.airborne === "1") {notes.push("Airborne")};
 
             setAttrs({
-                "notes0": notes[0],
-                "notes1": notes[1],
-                "notes2": notes[2],
-                "notes3": notes[3],
-                "notes4": notes[4],
+                "notes0": notes[0] || "",
+                "notes1": notes[1] || "",
+                "notes2": notes[2] || "",
+                "notes3": notes[3] || "",
+                "notes4": notes[4] || "",
             });
         });    
     });  
