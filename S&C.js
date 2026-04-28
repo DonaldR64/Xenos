@@ -595,9 +595,8 @@ const XR = (() => {
             this.cube = offset.toCube();
             this.label = offset.label();
             this.elevation = 0;
-            this.terrain = "Open Field";
-            this.offboard = false;
-            this.type = "Open"
+            this.terrain = "Offboard";
+            this.type = "Offboard"
             this.cover = 0;
             this.infantry = 0;
             this.blockLOS = false;
@@ -1039,13 +1038,9 @@ const XR = (() => {
                 let hex = HexMap[centreLabel];
                 hex = Object.assign(hex, terrain);
                 HexMap[centreLabel] = hex;
-            } 
-
-
-
-            if (name === "Map") {
-                DefineOffboard(token);
             }
+
+
         })
 
 
@@ -1122,21 +1117,7 @@ const XR = (() => {
 
     }
 
-    const DefineOffboard = (token) => {
-        let centre = new Point(token.get("left"),token.get('top'));
-        let halfW = token.get("width")/2;
-        let halfH = token.get("height")/2;
-        let minX = centre.x - halfW;
-        let maxX = centre.x + halfW;
-        let minY = centre.y - halfH;
-        let maxY = centre.y + halfH;
-        _.each(HexMap,hex => {
-            if (hex.centre.x < minX || hex.centre.x > maxX || hex.centre.y < minY || hex.centre.y > maxY) {
-                hex.terrain = "Offboard";
-                hex.offboard = true;
-            }
-        })
-    }
+
 
     const stringGen = () => {
         let text = "";
