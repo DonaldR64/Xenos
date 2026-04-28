@@ -476,6 +476,22 @@ const XR = (() => {
             }
             return results;
         }
+
+        linedraw2(b) {
+            //returns array of hexes between this hex and hex 'b' incl. hex 'b', nudging other way from above 
+            var N = this.distance(b);
+            var a_nudge = new Cube(this.q - 1e-06, this.r - 1e-06, this.s + 2e-06);
+            var b_nudge = new Cube(b.q - 1e-06, b.r - 1e-06, b.s + 2e-06);
+            var results = [];
+            var step = 1.0 / Math.max(N, 1);
+            for (var i = 1; i < N; i++) {
+                results.push(a_nudge.lerp(b_nudge, step * i).round());
+            }
+            return results;
+        }
+
+
+
         label() {
             let offset = this.toOffset();
             let label = offset.label();
@@ -1226,6 +1242,8 @@ const XR = (() => {
 
 
 
+
+
     const TokenInfo = (msg) => {
         if (!msg.selected) {return};
         let id = msg.selected[0]._id;
@@ -1382,13 +1400,9 @@ log(hex)
 
 
     const CheckLOS = (msg) => {
-        let startTime = Date.now();
         let Tag = msg.content.split(";");
-        let shooter = ModelArray[Tag[1]];
-        let shooterUnit = UnitArray[shooter.unitID];
-        let target = ModelArray[Tag[2]];
-        let targetUnit = UnitArray[target.unitID];
-        let coverLevels = ["No","Light","Hard"];
+        let shooter = UnitArray[Tag[1]];
+        let target = UnitArray[Tag[2]];
         if (!shooter) {
             sendChat("","Not valid shooter");
             return;
@@ -1399,22 +1413,8 @@ log(hex)
         }
         SetupCard(shooter.name,"LOS",shooter.faction);
 
-        let losResult = GroupLOS(shooterUnit,targetUnit);
-        
-        //outputCard.body.push("Distance: " + distance + " Hex" + s);
-        if (losResult.los === false) {
-            outputCard.body.push("[#ff0000]No LOS to Target Unit[/#]");
-            //outputCard.body.push(losResult.losReason);
-        } else {
-            outputCard.body.push("LOS to Target");
-            outputCard.body.push("Distance between Units: " + losResult.distance + "  Hexes");
-            outputCard.body.push("Target Unit has " + coverLevels[losResult.cover] + " Cover");
-        }
-
-
-        let elapsed = Date.now()-startTime;
-        log("Check Group LOS in " + elapsed/1000 + " seconds");
-
+        let losResult = LOS(shooter,target);
+        outputCard.body.push("Hexes: " + losResult.toString())
 
         PrintCard();
     }
@@ -1423,130 +1423,18 @@ log(hex)
     const LOS = (shooter,target) => {
         let los = true;
         let losReason = "";
-        let cover = 0;
-        let coverTerrain = "";
         let shooterHex = HexMap[shooter.label];
         let targetHex = HexMap[target.label];
-        let distance = shooter.ClosestHex(target).distance;
-        //firing arc on weapon
-        let angle = TargetAngle(shooter,target);
-        let angleT = TargetAngle(target,shooter);
-        let shooterFacing = (angle <= 60 || angle >= 300) ? "Front":"Side/Rear";
-        let targetFacing = (angleT <= 60 || angleT >= 300) ? "Front":"Side/Rear";
+        let distance = targetHex.cube.distance(shooterHex.cube);
 
-        //check lines
-        let pt1 = new Point(0,shooterHex.elevation);
-//log("Pt1: " + pt1.x + " / " + pt1.y);
+        let interCubes1 = shooterHex.cube.linedraw(targetHex.cube);
+        let interCubes2 = shooterHex.cube.linedraw2(targetHex.cube);
+        let labels1 = interCubes1.map((e)=> e.label());
+        let labels2 = interCubes2.map((e)=> e.label());
+        let labels = labels1.concat(labels2);
+        labels = [...new Set(labels)];
 
-        let woodhexes = 0;
-        let startInWoods = (shooterHex.los === "Woods") ? true:false;
-//log("Start in Woods: " + startInWoods);
-
-        let interCubes = shooterHex.cube.linedraw(targetHex.cube)
-        let interLabels = [];
-//log("Length: " + interCubes.length)
-        let pt2 = new Point(interCubes.length + 1,targetHex.elevation);
-//log("Pt2: " + pt2.x + " / " + pt2.y);
-
-        mainLoop:
-        for (let i=0;i<interCubes.length;i++) {
-            let label = interCubes[i].label();
-            interLabels.push(label);
-            let interHex = HexMap[label];
-
-            if (interHex.tokenIDs.length > 0) {
-                for (let y=0;y<interHex.tokenIDs.length;y++) {
-                    let model3 = ModelArray[interHex.tokenIDs[y]];
-                    if (model3.unitID !== shooter.unitID && model3.unitID !== target.unitID) {
-                        los = false;
-                        losReason = "Blocked by an Intervening Unit";
-                        break mainLoop;
-                    }
-                }
-            }
-
-//log("I: " + i + ": " + label + ": " + interHex.terrain)
-            let interHexHeight = interHex.height + interHex.elevation;
-            let pt3 = new Point(i,0);
-            let pt4 = new Point(i,interHexHeight);
-//log("Pt3: " + pt3.x + " / " + pt3.y);
-//log("Pt4: " + pt4.x + " / " + pt4.y);
-
-
-            let intersect = lineLine(pt1,pt2,pt3,pt4);
-//log("Intersect: " + intersect)
-            if (intersect) {
-                if (interHex.los === false) {
-                    los = false;
-                    losReason = "Blocked by " +  interHex.terrain;
-                    break mainLoop;
-                }
-                if (interHex.los === "Woods") {
-                    woodhexes += 1;
-                    if (woodhexes > 3) {
-                        los = false;
-                        losReason = "Blocked by Depth of Woods";
-                        break mainLoop;
-                    }
-                }
-                if (interHex.los === true) {
-                    if (woodhexes > 0) {
-                        if (startInWoods === false) {
-                            los = false;
-                            losReason = "On Other Side of Woods";
-                            break mainLoop;
-                        } 
-                    }
-                    startInWoods = false;
-                    woodhexes = 0;
-                }
-                if (i > 0 && ((interCubes.length - i) <= 3 || i <= 2)) { //0 index 
-                    cover = interHex.cover;
-                    coverTerrain = interHex.terrain;
-                }
-            } else {
-                if (woodhexes > 0) {
-                    if (startInWoods === false) {
-                        los = false;
-                        losReason = "On Other Side of Woods";
-                        break mainLoop;
-                    } 
-                }
-                startInWoods = false;
-                woodhexes = 0;
-            }
-        }
-
-        //target hex
-        if (targetHex.los === "Woods") {
-            woodhexes += 1;
-            if (woodhexes > 5) {
-                los = false;
-                losReason = "Blocked by Depth of Woods";
-            }
-        } else if (woodhexes > 0 && startInWoods === false) {
-            los = false;
-            losReason = "On Other Side of Woods";
-        }
-        if (cover === 1 && targetHex.cover === 1 && targetHex.terrain !== coverTerrain) {
-            cover = 2;
-        } else {
-            cover = Math.max(cover,targetHex.cover);
-        }
-
-//log("Cover: " + cover)
-
-
-        let result = {
-            los: los,
-            losReason: losReason,
-            distance: distance,
-            cover: cover,
-            shooterFacing: shooterFacing,
-            targetFacing: targetFacing,
-        }
-
-        return result;
+        return labels;
     }
 
 
@@ -1642,6 +1530,9 @@ log(hex)
                 break;
             case '!NextTurn':
                 NextTurn();
+                break;
+            case '!CrossCheck':
+                Cross(msg);
                 break;
 
             case '!TokenInfo':
