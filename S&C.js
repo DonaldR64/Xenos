@@ -126,7 +126,7 @@ const XR = (() => {
         "Road": {name: "Road", type: "Road", infantry: 0, cover: 0, blockLOS: false},
         "Orchard": {name: "Orchard", type: "Open", infantry: 1, cover: -1, blockLOS: false},
         "Farmhouse": {name: "Farmhouse", type: "Open", infantry: 2, cover: -3, blockLOS: true},
-        "Plowed": {name: "Plowed Field", type: "Soft", infantry: 0, cover: 0, blockLOS: false},
+        "Ploughed": {name: "Ploughed Field", type: "Soft", infantry: 0, cover: 0, blockLOS: false},
 
 
 
