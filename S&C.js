@@ -1083,7 +1083,6 @@ const XR = (() => {
      
     const AddTokens = () => {
         UnitArray = {};
-        ModelArray = {};
         //create an array of all tokens
         let start = Date.now();
         let tokens = findObjs({
@@ -1472,7 +1471,6 @@ log(hex)
         LoadPage();
         BuildMap();
         //clear arrays
-        ModelArray = {};
         UnitArray = {};
         //clear token info
         let tokens = findObjs({
