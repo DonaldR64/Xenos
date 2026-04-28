@@ -65,7 +65,8 @@
             <label>Transport:</label><input type="checkbox" name="attr_transport" value="1">
             <label>Open Topped:</label><input type="checkbox" name="attr_openTopped" value="1">
             <label>Airborne:</label><input type="checkbox" name="attr_airborne" value="1">
-
+            <label>HQ Unit:</label><input type="checkbox" name="attr_hq" value="1">
+            <label>Field Line:</label><input type="checkbox" name="attr_line" value="1">
         </div>
 
     </div>    
@@ -178,7 +179,8 @@
             if (values.transport === "1") notes.push("Transport");
             if (values.openTopped === "1") {notes.push("Open Topped")};
             if (values.airborne === "1") {notes.push("Airborne")};
-
+            if (values.hq === "1") {notes.push("HQ Unit")};
+            if (values.line === "1") {notes.push("Field Line")};
             setAttrs({
                 "notes0": notes[0] || "",
                 "notes1": notes[1] || "",
