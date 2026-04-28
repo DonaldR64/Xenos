@@ -67,6 +67,16 @@
             <label>Airborne:</label><input type="checkbox" name="attr_airborne" value="1">
             <label>HQ Unit:</label><input type="checkbox" name="attr_hq" value="1">
             <label>Field Line:</label><input type="checkbox" name="attr_line" value="1">
+            <br>
+            <label for="attr_mode">Vehicle Mode:</label>
+            <select name="attr_mode">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="Wheeled">Wheeled</option>
+                <option value="Half-Track">Half-Track</option>
+                <option value="Tracked">Tracked</option>
+            </select>
+
+
         </div>
 
     </div>    
@@ -170,7 +180,7 @@
 
 
     on("change:attrs sheet:opened", function() { 
-        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne"], function(values) {
+        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode"], function(values) {
             let notes = [];
             if (values.radio === "1") {notes.push("Radio Equipped")};
             if (values.deployed === "1") {notes.push("Deployed")};
@@ -181,6 +191,10 @@
             if (values.airborne === "1") {notes.push("Airborne")};
             if (values.hq === "1") {notes.push("HQ Unit")};
             if (values.line === "1") {notes.push("Field Line")};
+            if (values.mode !== "") {notes.push(values.mode)};
+
+
+
             setAttrs({
                 "notes0": notes[0] || "",
                 "notes1": notes[1] || "",

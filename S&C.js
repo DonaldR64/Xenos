@@ -1171,6 +1171,8 @@ const XR = (() => {
         let pass = false;
         let line = false;
 
+
+
         let hex = HexMap[unit.label];
         let ids = hex.tokenIDs;
         _.each(ids,id2 => {
@@ -1187,8 +1189,9 @@ const XR = (() => {
                 }
             }
         })
-        let hexes = hex.cube.neighbours();
-        _.each(hexes,hex2 => {
+        let cubes = hex.cube.neighbours();
+        _.each(cubes,cube => {
+            let hex2 = HexMap[cube.label()];
             let ids = hex2.tokenIDs;
             _.each(ids,id2 => {
                 let unit2 = UnitArray[id2];
@@ -1198,16 +1201,6 @@ const XR = (() => {
                 }            
             })
         })
-
-        // in hex iwth field line marker with link
-
-
-
-        
-        
-
-
-
 
         if (pass === false) {
             let roll = randomInteger(6);
@@ -1591,6 +1584,9 @@ log(hex)
                 }
                 unit.label = label;
                 unit.cube = cube;
+                if (state.SC.turn > 0) {
+                    unit.token.set(SM.moved,true);
+                }
             }
         } else {
             let character = getObj("character", tok.get("represents"));   
