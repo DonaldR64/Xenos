@@ -1312,6 +1312,8 @@ log(weapon)
 //9. ADD FLANKED COUNTER TO SURVIVING TARGET UNIT
 //Place a FIRED! counter next to the attacking unit.
 //use suppressive rules
+//use armour rules
+
 
 
 
