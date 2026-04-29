@@ -1307,6 +1307,14 @@ log(weapon)
         outputCard.body.push(shootTip + " with " + weapon.name);
 
 
+//7. COMPARE ATTACKER’S ATTACK POWER TO TARGET’S ARMOR
+//8. REMOVE UNIT FROM THE BOARD IF DESTROYED or replace with 1/2 squad
+//9. ADD FLANKED COUNTER TO SURVIVING TARGET UNIT
+//Place a FIRED! counter next to the attacking unit.
+//use suppressive rules
+
+
+
 
         PrintCard();
 
