@@ -332,7 +332,7 @@ const Scenario = (() => {
                 });            
             }
         }
-        return attributeobj.id;
+        return;
     };
 
     const DeleteAttribute = (characterID,attributeName) => {
@@ -700,7 +700,7 @@ const Scenario = (() => {
             this.cube = cube;
             this.label = label;
 
-            if (this.type === "Squad") {
+            if (this.type.includes("Squad")) {
                 this.team1ID = aa.team1ID || ""; //Rifle Team
                 this.team2ID = aa.team2ID || ""; //depending on unit, rifle team or MG team
             }
@@ -728,8 +728,8 @@ const Scenario = (() => {
         let parentUnit = UnitArray[Tag[1]];
         let team1Unit = UnitArray[Tag[2]];
         let team2Unit = UnitArray[Tag[3]];
-        attributeSet(parentUnit.charID,"team1ID",team1Unit.charID);
-        attributeSet(parentUnit.charID,"team2ID",team2Unit.charID);
+        AttributeSet(parentUnit.charID,"team1ID",team1Unit.charID);
+        AttributeSet(parentUnit.charID,"team2ID",team2Unit.charID);
         sendChat("","Teams Set");
 log(parentUnit.team1ID)
 log(parentUnit.team2ID)
@@ -1289,7 +1289,7 @@ log(weapon)
         let hits = 0;
         for (let i=0;i<dice;i++) {
             let roll = randomInteger(6);
-            roll -= mod;
+            roll += mod;
             rolls.push(roll);
             if (roll > losResult.distance) {
                 hits++;
@@ -1297,7 +1297,7 @@ log(weapon)
         }
         rolls.sort();
         rolls.reverse();
-        shootTip = "Rolls: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+<br>" + shootTip;
+        shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+<br>" + shootTip;
 
         if (hits === 0) {
             shootTip = '[Misses](#" class="showtip" title="' + shootTip + ')';
