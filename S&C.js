@@ -1412,6 +1412,12 @@ log(weapon)
             shootTip += "<br>Shooter Moved -1";
             mod--;
         }
+        if (shooter.token.get(SM.supp) !== false) {
+            let supp = parseInt(shooter.token.get(SM.supp));
+            shootTip += "<br>Shooter Suppressed -" + supp;
+            mod-=supp;
+        }
+
 
         let rolls = [];
         let hits = 0;
