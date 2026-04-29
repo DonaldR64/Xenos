@@ -115,7 +115,7 @@ const Scenario = (() => {
         moved: "status_Advantage-or-Up::2006462",
         flanked1: "status_letters_and_numbers0228::5982146",
         flanked2: "status_letters_and_numbers0229::5982147",
-        shot: "status_Shell::5553215",
+        fired: "status_Shell::5553215",
 
     }
 
@@ -673,19 +673,29 @@ const Scenario = (() => {
                 let name = aa["weapon" + i + "Name"];
                 if (!name || name === "") {continue};
                 let dice = parseInt(aa["weapon" + i + "Dice"]);
-                let attack = aa["weapon" + i + "Attack"];
-
+                let attack = ["-"];
+                let maxRange = 1;
+                let flag = false;
+                for (let j=1;j<6;j++) {
+                    let att = aa["weapon" + i + "Attack" + j] || "-";
+                    attack.push(att);
+                    if (att === "-" && flag === false) {
+                        maxRange = j-1;
+                        flag = true;
+                    }
+                }
 
                 let sound = aa["weapon" + i + "Sound"];
                 let weapon = {
                     name: name,
                     dice: dice,
                     attack: attack,
+                    maxRange: maxRange,
                     sound: sound,
                 }
                 weapons.push(weapon);
             }
-
+            this.weapons = weapons;
             this.token = token;
             this.cube = cube;
             this.label = label;
@@ -1221,6 +1231,73 @@ const Scenario = (() => {
         PrintCard();
     }
 
+    const Shoot = (msg) => {    
+        let Tag = msg.content.split(";");
+        let shooter = UnitArray[Tag[1]];
+        let target = UnitArray[Tag[2]];
+        let targetHex = HexMap[target.label];
+        let weapon = shooter.weapons[Tag[3]];
+        let errorMsg = [];
+log(weapon)
+        SetupCard(shooter.name,"Shoot",shooter.faction);
+
+        if (shooter.token.get(SM.fired) === true) {
+            errorMsg.push("Unit already Fired");
+        }
+        let losResult = LOS(shooter,target);
+        if (losResult.los === false) {
+            errorMsg.push("No LOS, " + losResult.losReason);
+        }
+        if ((losResult.distance > weapon.maxRange) || losResult.distance > (weapon.maxRange + 1)) {
+            errorMsg.push("Out of Weapon's Range");
+        }
+
+
+        if (ErrorMsg(errorMsg) === true) {return};
+
+        let dice = weapon.dice;
+        let mod = targetHex.cover;
+        let shootTip = (mod === 0) ? "No Cover":"Cover " + mod;
+        if (target.token.get(SM.moved) === true) {
+            shootTip += "<br>Target Moved -1";
+            mod--;
+        }
+        if (shooter.token.get(SM.moved) === true) {
+            shootTip += "<br>Shooter Moved -1";
+            mod--;
+        }
+
+        let rolls = [];
+        let hits = 0;
+        for (let i=0;i<dice;i++) {
+            let roll = randomInteger(6);
+            roll -= mod;
+            rolls.push(roll);
+            if (roll > losResult.distance) {
+                hits++;
+            }
+        }
+        rolls.sort();
+        rolls.reverse();
+        shootTip = "Rolls: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+<br>" + shootTip;
+
+        if (hits === 0) {
+            shootTip = '[Misses](#" class="showtip" title="' + shootTip + ')';
+        } else {
+            let hitText = (hits > 1) ? hits + " Hits":hits + " Hit";
+            shootTip = 'gets [' + hitText +  '](#" class="showtip" title="' + shootTip + ')';
+        }
+        outputCard.body.push(shooter.name + " fires its " + weapon.name);
+        outputCard.body.push("It " + shootTip);
+
+
+
+        PrintCard();
+
+    }
+
+
+
 
 
 
@@ -1425,13 +1502,8 @@ log(hex)
         let distance = targetHex.cube.distance(shooterHex.cube);
         let finalLOS = true;
         let finalLOSReason = "";
-        let ignoreEdge = [0,0];
-
-        if (shooterHex.name.includes("Hill")) {
-            distance--;
-            ignoreEdge = [1,1];
-        }
-
+        let ignoreEdge = (shooterHex.name.includes("Hill")) ? [1,1]:[0,0];
+ 
         let interCubes = [shooterHex.cube.linedraw(targetHex.cube),shooterHex.cube.linedraw2(targetHex.cube)];
         let labels = [interCubes[0].map((e)=> e.label()), interCubes[1].map((e)=> e.label())];
 
@@ -1592,7 +1664,9 @@ log(hex)
             case '!Roll':
                 RollDice(msg);
                 break;
-
+            case '!Shoot':
+                Shoot(msg);
+                break;
 
         }
     };
