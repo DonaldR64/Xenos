@@ -756,7 +756,8 @@ const Scenario = (() => {
             unit.Suppress();
         }
 
-        Casualty(note) {
+        Casualty(note = true) {
+            //send a false if just remove
             if (note === true) {
                 this.token.set("layer","map");
                 this.token.set("status_dead",true);
@@ -770,16 +771,51 @@ const Scenario = (() => {
             //vehicle damage
             let damageRoll = randomInteger(6);
             let damageResult = damageRoll;
-            damageResult += this.armour;
+            damageResult -= this.armour;
+            damageResult += ap;
             if (this.token.get(SM.flanked1) === true) {
-                damageResult--;
-            }
-            if (this.token.get(SM.flanked2) === true) {
-                damageResult -= 2;
-            }
-            if (this.skirts === true) {
                 damageResult++;
             }
+            if (this.token.get(SM.flanked2) === true) {
+                damageResult += 2;
+            }
+            if (this.skirts === true) {
+                damageResult--;
+            }
+            damageResult = Math.max(Math.min(5,damageResult),1);
+            switch(damageResult) {
+                case 1:
+                    outputCard.body.push(this.name + ' is Shaken');
+                    //shaken marker
+                    break;
+                case 2:
+                    let roll = randomInteger(2);
+                    if (roll === 1 || this.radio === finalLOSReason) {
+                        outputCard.body.push(this.name + " has lost its Commander");
+                    } else {
+                        outputCard.body.push(this.name + " has had its radio destroyed");
+                    }
+                    //uncommanded marker
+                    break;
+                case 3:
+                    if (this.mode === "Wheeled") {
+                        outputCard.body.push(this.name + " has lost wheel(s) and is Immobilized");
+                    } else {
+                        outputCard.body.push(this.name + " loses a track and is Immobilized");
+                    }
+                    //immobilized marker
+                    break;
+                case 4:
+                    outputCard.body.push(this.name + " is on fire!");
+                    //fire marker
+                    break;
+                case 5:
+                    outputCard.body.push(this.name + ' is Destroyed!');
+                    this.Casualty();
+                    break;
+            }
+
+
 
 
 
