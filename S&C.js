@@ -652,9 +652,9 @@ const XR = (() => {
             this.charID = charID;
 
             this.faction = aa.faction || "Neutral";
-            if (state.SC.factions[0] === "") {
+            if (state.SC.factions[0] === "" && this.faction !== "Neutral") {
                 state.SC.factions[0] = this.faction;
-            } else if (state.SC.factions[0] !== this.faction && state.SC.factions[1] === "") {
+            } else if (state.SC.factions[0] !== this.faction && state.SC.factions[1] === "" && this.faction !== "Neutral") {
                 state.SC.factions[1] = this.faction;
             }
             this.player = (this.faction === "Neutral") ? 2:(state.SC.factions[0] === this.faction)? 0:1;
