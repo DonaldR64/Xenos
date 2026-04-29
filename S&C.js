@@ -1404,6 +1404,8 @@ log(hex)
         let Tag = msg.content.split(";");
         let shooter = UnitArray[Tag[1]];
         let target = UnitArray[Tag[2]];
+        let targetHex = HexMap[target.label];
+
         if (!shooter) {
             sendChat("","Not valid shooter");
             return;
@@ -1415,8 +1417,23 @@ log(hex)
         SetupCard(shooter.name,"LOS",shooter.faction);
 
         let losResult = LOS(shooter,target);
-        outputCard.body.push("Hexes: " + losResult.toString())
 
+        outputCard.body.push("Distance: " + losResult.distance + " Hexes");
+        if (losResult.los === false) {
+            outputCard.body.push("No LOS to Target");
+            outputCard.body.push(losResult.losReason);
+        } else {
+            outputCard.body.push("There is LOS to Target");
+            if (targetHex.cover === 0) {
+                outputCard.body.push("Target has no Cover");
+            } else {
+                outputCard.body.push("Target has Cover of " + targetHex.cover);
+            }
+            if (target.type.includes("Team") && targetHex.infantry > 0) {
+                outputCard.body.push("Target has Armour Bonus of " + targetHex.infantry);
+            }
+        }
+        
         PrintCard();
     }
 
@@ -1432,10 +1449,31 @@ log(hex)
         let interCubes2 = shooterHex.cube.linedraw2(targetHex.cube);
         let labels1 = interCubes1.map((e)=> e.label());
         let labels2 = interCubes2.map((e)=> e.label());
-        let labels = labels1.concat(labels2);
-        labels = [...new Set(labels)];
+        let len = labels1.length;
+        let lastHex = shooterHex;
 
-        return labels;
+        for (let i=0;i<len;i++) {
+            
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+        let result = {
+            los: los,
+            losReason: losReason,
+            distance: distance,
+        }
+
+        return result;
     }
 
 
