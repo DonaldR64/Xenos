@@ -1381,6 +1381,13 @@ log(weapon)
         if (shooter.token.get(SM.shaken) === true) {
             errorMsg.push("Unit is unable to fire, the Crew is Shaken this turn");
         }
+        if (shooter.sniper === true && target.type === "Vehicle") {
+            errorMsg.push("Cannot target Vehicles");
+        }
+        if (shooter.at === true && target.type.includes("Infantry")) {
+            errorMsg.push("Cannot target Infantry");
+        }
+
         let losResult = LOS(shooter,target);
         if (losResult.los === false) {
             errorMsg.push("No LOS, " + losResult.losReason);
@@ -1426,7 +1433,6 @@ log(weapon)
         outputCard.body.push(shootTip + " with " + weapon.name);
 
         if (hits > 0) {
-
             let ap = parseInt(weapon.attack[losResult.distance]);
             let attackTip = "Weapon AP: " + ap;
             let armour = target.armour;
@@ -1435,15 +1441,24 @@ log(weapon)
                 armour += targetHex.infantry;
                 attackTip += "<br>Terrain Armour: " + targetHex.infantry;
             }
-
             if (ap >= armour) {
                 if (target.type.includes("Infantry") || target.type === "Gun") {
-                    if (target.type.includes("Squad")) {
-                        outputCard.body.push(target.name + " is Supressed and reduced to a Team");
-                        target.Half();
+                    if (shooter.sniper === true) {
+                        if (target.type.includes("Team")) {
+                            outputCard.body.push(target.name + " Is Destroyed");
+                            target.Casualty();
+                        } else {
+                            outputCard.body.push(target.name + " is Suppressed by Sniper Fire");
+                            target.Suppress();
+                        }
                     } else {
-                        outputCard.body.push(target.name + " Is Destroyed");
-                        target.Casualty();
+                        if (target.type.includes("Squad")) {
+                            outputCard.body.push(target.name + " is Supressed and reduced to a Team");
+                            target.Half();
+                        } else {
+                            outputCard.body.push(target.name + " Is Destroyed");
+                            target.Casualty();
+                        }
                     }
                 } else {
                     target.Damage(ap);
@@ -1460,6 +1475,12 @@ log(weapon)
                 }
             }
         }
+
+
+
+
+
+
         shooter.token.set(SM.fired,true);
         PrintCard();
 
