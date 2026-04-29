@@ -1302,11 +1302,9 @@ log(weapon)
         if (hits === 0) {
             shootTip = '[Misses](#" class="showtip" title="' + shootTip + ')';
         } else {
-            let hitText = (hits > 1) ? hits + " Hits":hits + " Hit";
-            shootTip = 'gets [' + hitText +  '](#" class="showtip" title="' + shootTip + ')';
+            shootTip = '[Hits](#" class="showtip" title="' + shootTip + ')';
         }
-        outputCard.body.push(shooter.name + " fires its " + weapon.name);
-        outputCard.body.push("It " + shootTip);
+        outputCard.body.push(shootTip + " with " + weapon.name);
 
 
 
