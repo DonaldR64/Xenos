@@ -700,6 +700,13 @@ const Scenario = (() => {
             this.cube = cube;
             this.label = label;
 
+            if (this.type === "Squad") {
+                this.team1ID = aa.teamID || ""; //Rifle Team
+                this.team2ID = aa.team2ID || ""; //depending on unit, rifle team or MG team
+            }
+
+
+
             UnitArray[id] = this;
             HexMap[label].tokenIDs.push(id);
 
@@ -1487,7 +1494,7 @@ log(hex)
             } else {
                 outputCard.body.push("Target has Cover of " + targetHex.cover);
             }
-            if (target.type.includes("Team") && targetHex.infantry > 0) {
+            if (target.type.includes("Infantry") && targetHex.infantry > 0) {
                 outputCard.body.push("Target has Armour Bonus of " + targetHex.infantry);
             }
         }
