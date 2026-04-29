@@ -719,16 +719,16 @@ const Scenario = (() => {
 
 
         Suppress(){
-            let level = parseInt(target.token.get(SM.supp)) || 0;
+            let level = parseInt(this.token.get(SM.supp)) || 0;
             level++;
-            target.token.set(SM.supp,level);
+            this.token.set(SM.supp,level);
         }
 
         Rally(){
-            let level = parseInt(target.token.get(SM.supp)) || 0;
+            let level = parseInt(this.token.get(SM.supp)) || 0;
             level--;
             if (level <= 0) {level = false};
-            target.token.set(SM.supp,level);
+            this.token.set(SM.supp,level);
         }
 
         Flanked(){
@@ -758,6 +758,7 @@ const Scenario = (() => {
             let token = summonToken(this.team1ID,this.token.get("left"),this.token.get("left"),100);
             let unit = new Unit(token.get("id"));
             unit.Suppress();
+            this.Casualty(false);
         }
 
         Casualty(note = true) {
@@ -870,6 +871,7 @@ const Scenario = (() => {
 
     summonToken = function(cID,left,top,size = 70) {
         let character = getObj("character", cID);
+        let newToken;
         character.get('defaulttoken',function(defaulttoken){
             const dt = JSON.parse(defaulttoken);
             let img = dt.imgsrc;
@@ -882,12 +884,12 @@ const Scenario = (() => {
                 dt.layer = "objects";
                 dt.width = size;
                 dt.height = size;
-                let newToken = createObj("graphic", dt);
-                return newToken;
+                newToken = createObj("graphic", dt);
             } else {
                 sendChat('','/w gm Cannot create token for <b>'+character.get('name')+'</b>');
             }
         });
+        return newToken;
     }
 
 
