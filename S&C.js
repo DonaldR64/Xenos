@@ -128,14 +128,15 @@ const XR = (() => {
         "Open": {name: "Open Field", type: "Open", infantry: 0, cover: 0, blockLOS: false},
         "Dugout": {name: "Dugout", type: "Dugout", infantry: 2, cover: -2, blockLOS: false},
         "Ruins": {name: "Ruins", type: "Ruins", infantry: 2, cover: -2, blockLOS: false},
-        "Brush": {name: "Brush", type: "Brush", infantry: 0, cover: -1, blockLOS: false},
+        "Brush": {name: "Brush", type: "Rough", infantry: 0, cover: -1, blockLOS: false},
         "Road": {name: "Road", type: "Road", infantry: 0, cover: 0, blockLOS: false},
         "Orchard": {name: "Orchard", type: "Open", infantry: 1, cover: -1, blockLOS: false},
         "Farmhouse": {name: "Farmhouse", type: "Open", infantry: 2, cover: -3, blockLOS: true},
         "Ploughed": {name: "Ploughed Fields", type: "Soft", infantry: 0, cover: 0, blockLOS: false},
-
-
-
+        "Hill Open": {name: "Open Hilltop", type: "Open", infantry: 0, cover: 0, blockLOS: true},
+        "Hill Brush": {name: "Hilltop w/ Brush", type: "Rough", infantry: 0, cover: -1, blockLOS: true},
+        "Woods": {name: "Woods", type: "Rough", infantry: 1, cover: -2, blockLOS: true},
+        "Hill Woods": {name: "Wooded Hilltop", type: "Rough", infantry: 1, cover: -2, blockLOS: true},
 
     }
 
@@ -471,7 +472,7 @@ const XR = (() => {
             var b_nudge = new Cube(b.q + 1e-06, b.r + 1e-06, b.s - 2e-06);
             var results = [];
             var step = 1.0 / Math.max(N, 1);
-            for (var i = 1; i < N; i++) {
+            for (var i = 1; i <= N; i++) {
                 results.push(a_nudge.lerp(b_nudge, step * i).round());
             }
             return results;
@@ -484,7 +485,7 @@ const XR = (() => {
             var b_nudge = new Cube(b.q - 1e-06, b.r - 1e-06, b.s + 2e-06);
             var results = [];
             var step = 1.0 / Math.max(N, 1);
-            for (var i = 1; i < N; i++) {
+            for (var i = 1; i <= N; i++) {
                 results.push(a_nudge.lerp(b_nudge, step * i).round());
             }
             return results;
@@ -995,7 +996,6 @@ const XR = (() => {
                 halfToggleY = -halfToggleY;
             }
         }
-        //AddElevations();
         AddTerrain();    
         AddTokens();
 
@@ -1011,7 +1011,9 @@ const XR = (() => {
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
         _.each(tokens,token => {
             let name = token.get("name");
-            name = name.split(" ")[0];
+            if (name.includes("Hill") === false) {
+                name = name.split(" ")[0];
+            }
             let terrain = TerrainInfo[name];
             if (terrain) {
 //log(terrain)
@@ -1058,26 +1060,6 @@ const XR = (() => {
             }
         })
     }
-
-    const AddElevations = () => {
-        //use terrain lines to build elevations
-        //add roads also
-        let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
-        _.each(paths,path => {
-            let elevation = HillHeights[path.get("stroke").toLowerCase()];
-            if (elevation) {
-                elevation = parseInt(elevation);
-                let vertices = translatePoly(path);
-                _.each(HexMap,hex => {
-                    let result = pointInPolygon(hex.centre,vertices);
-                    if (result === true) {
-                        hex.elevation = Math.max(hex.elevation,elevation);
-                    }
-                });
-            }
-        });
-    }
-
      
     const AddTokens = () => {
         UnitArray = {};
@@ -1417,7 +1399,6 @@ log(hex)
         SetupCard(shooter.name,"LOS",shooter.faction);
 
         let losResult = LOS(shooter,target);
-
         outputCard.body.push("Distance: " + losResult.distance + " Hexes");
         if (losResult.los === false) {
             outputCard.body.push("No LOS to Target");
@@ -1439,37 +1420,64 @@ log(hex)
 
 
     const LOS = (shooter,target) => {
-        let los = true;
-        let losReason = "";
         let shooterHex = HexMap[shooter.label];
         let targetHex = HexMap[target.label];
         let distance = targetHex.cube.distance(shooterHex.cube);
+        let finalLOS = true;
+        let finalLOSReason = "";
+        let ignoreEdge = [0,0];
 
-        let interCubes1 = shooterHex.cube.linedraw(targetHex.cube);
-        let interCubes2 = shooterHex.cube.linedraw2(targetHex.cube);
-        let labels1 = interCubes1.map((e)=> e.label());
-        let labels2 = interCubes2.map((e)=> e.label());
-        let len = labels1.length;
-        let lastHex = shooterHex;
-
-        for (let i=0;i<len;i++) {
-            
-
-
-
+        if (shooterHex.name.includes("Hill")) {
+            distance--;
+            ignoreEdge = [1,1];
         }
 
+        let interCubes = [shooterHex.cube.linedraw(targetHex.cube),shooterHex.cube.linedraw2(targetHex.cube)];
+        let labels = [interCubes[0].map((e)=> e.label()), interCubes[1].map((e)=> e.label())];
 
+        let len = labels[0].length;
+        let los = [true,true];
+        let losReason = ["",""];
+        for (let side=0;side<2;side++) {
+            for (let i=0;i<len;i++) {
+                let interHex = HexMap[labels[side][i]];
+                let lastHex = shooterHex;
+                if (i>0) {
+                    lastHex = HexMap[labels[side][i-1]];
+                }
+                //does hex block LOS (unless is targetHex)
+                if (interHex.blockLOS === true && i<(len-1)) {
+                    los[side] = false;
+                    losReason[side] = interHex.name;
+                    break;
+                }
+                //does edge between hex and prior hex block LOS
+                let dir = lastHex.cube.whatDirection(interHex.cube);
+                let edge = lastHex.edges[dir];
+                if (edge === "Bocage") {
+                    if (ignoreEdge[side] === 0) {
+                        los[side] = false;
+                        losReason[side] = "Bocage";
+                        break;
+                    } else {
+                        ignoreEdge[side] = 0;
+                    }
+                }
+            }
+        }
 
-
-
-
-
-
+        if (los[0] === false && los[1] === false) {
+            finalLOS = false;
+            finalLOSReason = losReason[0];
+            if (losReason[0] !== losReason[1]) {
+                finalLOSReason += " / " + losReason[1];
+            }
+            finalLOSReason = "Blocked by " + finalLOSReason;
+        }
 
         let result = {
-            los: los,
-            losReason: losReason,
+            los: finalLOS,
+            losReason: finalLOSReason,
             distance: distance,
         }
 
