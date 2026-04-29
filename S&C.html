@@ -82,7 +82,8 @@
             <br>
             <label>AT Weapon:</label><input type="checkbox" name="attr_at" value="1">
             <br>
-
+            <label>Side Skirts:</label><input type="checkbox" name="attr_skirts" value="1">
+            <br>
         </div>
 
     </div>    
@@ -186,7 +187,7 @@
 
 
     on("change:attrs sheet:opened", function() { 
-        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode"], function(values) {
+        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode","sniper","at","skirts"], function(values) {
             let notes = [];
             if (values.radio === "1") {notes.push("Radio Equipped")};
             if (values.deployed === "1") {notes.push("Deployed")};
@@ -200,6 +201,7 @@
             if (values.mode !== "") {notes.push(values.mode)};
             if (values.sniper === "1") {notes.push("Sniper")};            
             if (values.at === "1") {notes.push("AT Team")};
+            if (values.skirts === "1") {notes.push("Side Skirts")};
 
 
             setAttrs({

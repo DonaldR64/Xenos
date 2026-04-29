@@ -116,7 +116,7 @@ const Scenario = (() => {
         flanked1: "status_letters_and_numbers0228::5982146",
         flanked2: "status_letters_and_numbers0229::5982147",
         fired: "status_Shell::5553215",
-
+        supp: "status_yellow",
     }
 
     const Capit = (val) => {
@@ -662,7 +662,7 @@ const Scenario = (() => {
             this.experience = aa.experience || "Experienced";
             this.armour = parseInt(aa.armour);
             this.move = parseInt(aa.move);
-            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at"];
+            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at","skirts"];
             _.each(notes,note => {
                 this[note] = (aa[note] === "1") ? true:false;
             })
@@ -714,6 +714,84 @@ const Scenario = (() => {
         }
 
 
+        Suppress(){
+            let level = parseInt(target.token.get(SM.supp)) || 0;
+            level++;
+            target.token.set(SM.supp,level);
+        }
+
+        Rally(){
+            let level = parseInt(target.token.get(SM.supp)) || 0;
+            level--;
+            if (level <= 0) {level = false};
+            target.token.set(SM.supp,level);
+        }
+
+        Flanked(){
+            if (this.token.get(SM.flanked1) === true) {  
+                this.token.set(SM.flanked1,false);
+                this.token.set(SM.flanked2,true);
+            } else {
+                this.token.set(SM.flanked1,true);
+            }
+        }
+
+        Split(){
+            //split unit into two teams
+
+
+
+        }
+
+        Merge(){
+            //merge two teams into 1
+
+        }
+
+        Half(){
+            //squad taked damage and turns into team
+            //this.team1ID is char ID
+            let token = summonToken(this.team1ID,this.token.get("left"),this.token.get("left"),100);
+            let unit = new Unit(token.get("id"));
+            unit.Suppress();
+        }
+
+        Casualty(note) {
+            if (note === true) {
+                this.token.set("layer","map");
+                this.token.set("status_dead",true);
+            } else {
+                this.token.remove();
+            }
+            delete UnitArray[this.id];
+        }
+
+        Damage(ap) {
+            //vehicle damage
+            let damageRoll = randomInteger(6);
+            let damageResult = damageRoll;
+            damageResult += this.armour;
+            if (this.token.get(SM.flanked1) === true) {
+                damageResult--;
+            }
+            if (this.token.get(SM.flanked2) === true) {
+                damageResult -= 2;
+            }
+            if (this.skirts === true) {
+                damageResult++;
+            }
+
+
+
+
+        }
+
+
+
+
+
+
+
 
 
 
@@ -731,12 +809,30 @@ const Scenario = (() => {
         AttributeSet(parentUnit.charID,"team1ID",team1Unit.charID);
         AttributeSet(parentUnit.charID,"team2ID",team2Unit.charID);
         sendChat("","Teams Set");
-log(parentUnit.team1ID)
-log(parentUnit.team2ID)
-
     }
 
 
+    summonToken = function(cID,left,top,size = 70) {
+        let character = getObj("character", cID);
+        character.get('defaulttoken',function(defaulttoken){
+            const dt = JSON.parse(defaulttoken);
+            let img = dt.imgsrc;
+            img = tokenImage(img);
+            if(dt && img){
+                dt.imgsrc=img;
+                dt.left=left;
+                dt.top=top;
+                dt.pageid = pageInfo.page.get('id');
+                dt.layer = "objects";
+                dt.width = size;
+                dt.height = size;
+                let newToken = createObj("graphic", dt);
+                return newToken;
+            } else {
+                sendChat('','/w gm Cannot create token for <b>'+character.get('name')+'</b>');
+            }
+        });
+    }
 
 
 
@@ -1306,29 +1402,42 @@ log(weapon)
         }
         outputCard.body.push(shootTip + " with " + weapon.name);
 
-        let ap = parseInt(weapon.attack[losResult.distance]);
-        let attackTip = "Weapon AP: " + ap;
-        let armour = target.armour;
-        attackTip += "<br>Target's Armour: " + armour;
-        if (target.type.includes("Infantry")) {
-            armour += targetHex.infantry;
-            attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+        if (hits > 0) {
+
+            let ap = parseInt(weapon.attack[losResult.distance]);
+            let attackTip = "Weapon AP: " + ap;
+            let armour = target.armour;
+            attackTip += "<br>Target's Armour: " + armour;
+            if (target.type.includes("Infantry")) {
+                armour += targetHex.infantry;
+                attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+            }
+
+            if (ap >= armour) {
+                if (target.type.includes("Infantry") || target.type === "Gun") {
+                    if (target.type.includes("Squad")) {
+                        outputCard.body.push(target.name + " is Supressed and reduced to a Team");
+                        target.Half();
+                    } else {
+                        outputCard.body.push(target.name + " Is Destroyed");
+                        target.Casualty();
+                    }
+                } else {
+                    target.Damage(ap);
+                }
+            } else {
+                outputCard.body.push("Target survives the fire");
+                if (target.armour > 0 && ap > 1) {
+                    outputCard.body.push("Target is Flanked for rest of the Turn");
+                    target.Flanked();
+                }
+                if (target.type.includes("Infantry") || target.type === "Gun") {
+                    outputCard.body.push("Target gains a level of Suppression");
+                    target.Suppress();
+                }
+            }
         }
-
-
-        
-
-//7. COMPARE ATTACKER’S ATTACK POWER TO TARGET’S ARMOR
-//8. REMOVE UNIT FROM THE BOARD IF DESTROYED or replace with 1/2 squad
-//9. ADD FLANKED COUNTER TO SURVIVING TARGET UNIT
-//Place a FIRED! counter next to the attacking unit.
-//use suppressive rules
-//use armour rules
-
-
-
-
-
+        shooter.token.set(SM.fired,true);
         PrintCard();
 
     }
