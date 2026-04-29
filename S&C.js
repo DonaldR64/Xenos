@@ -117,6 +117,10 @@ const Scenario = (() => {
         flanked2: "status_letters_and_numbers0229::5982147",
         fired: "status_Shell::5553215",
         supp: "status_yellow",
+        onfire: "status_Hot-or-On-Fire-2::2006479",
+        immobilized: "status_Paralyzed::2006491",
+        uncommand: "status_RIP::2006647",
+        shaken: "status_Terror::181068",
     }
 
     const Capit = (val) => {
@@ -786,16 +790,16 @@ const Scenario = (() => {
             switch(damageResult) {
                 case 1:
                     outputCard.body.push(this.name + ' is Shaken');
-                    //shaken marker
+                    this.token.set(SM.shaken,true);
                     break;
                 case 2:
                     let roll = randomInteger(2);
-                    if (roll === 1 || this.radio === finalLOSReason) {
+                    if (roll === 1 || this.radio === false) {
                         outputCard.body.push(this.name + " has lost its Commander");
                     } else {
                         outputCard.body.push(this.name + " has had its radio destroyed");
                     }
-                    //uncommanded marker
+                    this.token.set(SM.uncommand,true);
                     break;
                 case 3:
                     if (this.mode === "Wheeled") {
@@ -803,11 +807,11 @@ const Scenario = (() => {
                     } else {
                         outputCard.body.push(this.name + " loses a track and is Immobilized");
                     }
-                    //immobilized marker
+                    this.token.set(SM.immobilized,true);
                     break;
                 case 4:
                     outputCard.body.push(this.name + " is on fire!");
-                    //fire marker
+                    this.token.set(SM.onfire,true);
                     break;
                 case 5:
                     outputCard.body.push(this.name + ' is Destroyed!');
@@ -1267,61 +1271,20 @@ const Scenario = (() => {
     }
 
     const NextTurn = () => {
-        //is really next players turn
-        let turn = state.SC.turn;
-        if (turn === 0) {
-            turn = 1;
-            SetupCard("Turn 1","","Neutral");
-            outputCard.body.push("If appropriate, roll for Attacker/Defender");
-            outputCard.body.push("Setup and Start according to Scenario");
-            //no need to check for rally 
-            //first player will be set once someone activates a unit
+        
 
-        } else {
-            //check if prior player has any unactivated units
-            let flag = false;
-            _.each(UnitArray,unit => {
-                if (unit.faction === state.SC.activePlayer) {
-                    let model = ModelArray[unit.leaderID];
-                    if (model.token.get("aura1_color") === "#00ff00") {
-                        flag = true;
-                    }
-                }
-            })
-            if (flag === true) {
-                SetupCard("Turn Not Over","","Neutral");
-                outputCard.body.push("Player has units that have not activated");
-                PrintCard();
-                return;
-            }
-            if (state.SC.activePlayer !== state.SC.firstPlayer) {
-                turn++
-            } 
-            state.SC.activePlayer = (state.SC.activePlayer === 0) ? 1:0;
-            let faction = state.SC.factions[state.SC.activePlayer];
-            SetupCard(faction,"Turn " + turn,faction);
-            outputCard.body.push("Start with Rallying Suppressed Units (Yellow)");
-            outputCard.body.push("Then activate any units with Wild Charge active (Red)");
-            outputCard.body.push("Finally can activate remaining Units (Green)");
-            SetAuras(faction); //set to green or red, those that arent yellow/suppressed
+        //remove all SM.shaken, fired, moved markers
+        //check for fire 
 
 
 
 
-
-
-
-        }
-
-        state.SC.turn = turn;
-        PrintCard();
 
 
     }
  
 
     const InitiativeCheck = (msg) => {
-        //HQ and Radio dont have this macro
         if (!msg.selected) {return};
         let id = msg.selected[0]._id;
         let unit = UnitArray[id];
@@ -1329,47 +1292,47 @@ const Scenario = (() => {
         SetupCard(unit.name,"Command Initiative",unit.faction);
         let pass = false;
         let line = false;
-
-
-
-        let hex = HexMap[unit.label];
-        let ids = hex.tokenIDs;
-        _.each(ids,id2 => {
-            if (id2 !== id) {
-                let unit2 = UnitArray[id2];
-                if (unit2.hq === true) {
-                    outputCard.body.push("In Hex with HQ Unit");
-                    pass = true;
-                } else if (unit2.radio === true) {
-                    outputCard.body.push("In Hex with Radio Unit");
-                    pass = true;
-                } else if (unit2.line === true) {
-                    line = id2;
-                }
-            }
-        })
-        let cubes = hex.cube.neighbours();
-        _.each(cubes,cube => {
-            let hex2 = HexMap[cube.label()];
-            let ids = hex2.tokenIDs;
+        if ((unit.hq === true || unit.radio === true) && unit.token.get(SM.uncommand) === false) {
+            pass = true;
+        } else {
+            let hex = HexMap[unit.label];
+            let ids = hex.tokenIDs;
             _.each(ids,id2 => {
-                let unit2 = UnitArray[id2];
-                if (unit2.hq === true) {
-                    outputCard.body.push("Adjacent to HQ Unit");
-                    pass = true;
-                }            
+                if (id2 !== id) {
+                    let unit2 = UnitArray[id2];
+                    if (unit2.hq === true) {
+                        outputCard.body.push("In Hex with HQ Unit");
+                        pass = true;
+                    } else if (unit2.radio === true) {
+                        outputCard.body.push("In Hex with Radio Unit");
+                        pass = true;
+                    } else if (unit2.line === true) {
+                        line = id2;
+                    }
+                }
             })
-        })
-
-        if (pass === false) {
-            let roll = randomInteger(6);
-            let target = 5;
-            if (unit.experience === "Experienced") {target = 4};
-            if (unit.experience === "Veteran") {target = 3};
-            outputCard.body.push(DisplayDice(roll,unit.faction,32) + " vs. " + target + "+");
-            outputCard.body.push("Experience Level: " + unit.experience);
-            if (roll >= target) {
-                pass = true;
+            let cubes = hex.cube.neighbours();
+            _.each(cubes,cube => {
+                let hex2 = HexMap[cube.label()];
+                let ids = hex2.tokenIDs;
+                _.each(ids,id2 => {
+                    let unit2 = UnitArray[id2];
+                    if (unit2.hq === true) {
+                        outputCard.body.push("Adjacent to HQ Unit");
+                        pass = true;
+                    }            
+                })
+            })
+            if (pass === false) {
+                let roll = randomInteger(6);
+                let target = 5;
+                if (unit.experience === "Experienced") {target = 4};
+                if (unit.experience === "Veteran") {target = 3};
+                outputCard.body.push(DisplayDice(roll,unit.faction,32) + " vs. " + target + "+");
+                outputCard.body.push("Experience Level: " + unit.experience);
+                if (roll >= target) {
+                    pass = true;
+                }
             }
         }
 
@@ -1393,6 +1356,9 @@ log(weapon)
 
         if (shooter.token.get(SM.fired) === true) {
             errorMsg.push("Unit already Fired");
+        }
+        if (shooter.token.get(SM.shaken) === true) {
+            errorMsg.push("Unit is unable to fire, the Crew is Shaken this turn");
         }
         let losResult = LOS(shooter,target);
         if (losResult.los === false) {
