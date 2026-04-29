@@ -1,5 +1,5 @@
-const XR = (() => {
-    const version = '2026.4.27';
+const Scenario = (() => {
+    const version = '2026.4.28';
     if (!state.SC) {state.SC = {}};
 
     const pageInfo = {};
