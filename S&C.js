@@ -701,7 +701,7 @@ const Scenario = (() => {
             this.label = label;
 
             if (this.type === "Squad") {
-                this.team1ID = aa.teamID || ""; //Rifle Team
+                this.team1ID = aa.team1ID || ""; //Rifle Team
                 this.team2ID = aa.team2ID || ""; //depending on unit, rifle team or MG team
             }
 
@@ -723,7 +723,18 @@ const Scenario = (() => {
 
 
 
+    const AssignTeams = (msg) => {
+        let Tag = msg.content.split(";");
+        let parentUnit = UnitArray[Tag[1]];
+        let team1Unit = UnitArray[Tag[2]];
+        let team2Unit = UnitArray[Tag[3]];
+        attributeSet(parentUnit.charID,"team1ID",team1Unit.charID);
+        attributeSet(parentUnit.charID,"team2ID",team2Unit.charID);
+        sendChat("","Teams Set");
+log(parentUnit.team1ID)
+log(parentUnit.team2ID)
 
+    }
 
 
 
@@ -1673,6 +1684,9 @@ log(hex)
                 break;
             case '!Shoot':
                 Shoot(msg);
+                break;
+            case '!AssignTeams':
+                AssignTeams(msg);
                 break;
 
         }
