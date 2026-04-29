@@ -789,29 +789,45 @@ const Scenario = (() => {
             damageResult = Math.max(Math.min(5,damageResult),1);
             switch(damageResult) {
                 case 1:
-                    outputCard.body.push(this.name + ' is Shaken');
-                    this.token.set(SM.shaken,true);
+                    if (this.token.get(SM.shaken) === false) {
+                        outputCard.body.push(this.name + ' is Shaken');
+                        this.token.set(SM.shaken,true);
+                    } else {
+                        outputCard.body.push("The shot does only superficial damage");
+                    }
                     break;
                 case 2:
-                    let roll = randomInteger(2);
-                    if (roll === 1 || this.radio === false) {
-                        outputCard.body.push(this.name + " has lost its Commander");
+                    if (this.token.get(SM.uncommand) === false) {
+                        let roll = randomInteger(2);
+                        if (roll === 1 || this.radio === false) {
+                            outputCard.body.push(this.name + " has lost its Commander");
+                        } else {
+                            outputCard.body.push(this.name + " has had its radio destroyed");
+                        }
+                        this.token.set(SM.uncommand,true);
                     } else {
-                        outputCard.body.push(this.name + " has had its radio destroyed");
+                        outputCard.body.push("The shot does only superficial damage");
                     }
-                    this.token.set(SM.uncommand,true);
                     break;
                 case 3:
-                    if (this.mode === "Wheeled") {
-                        outputCard.body.push(this.name + " has lost wheel(s) and is Immobilized");
+                    if (this.token.get(SM.immobilized) === false) {
+                        if (this.mode === "Wheeled") {
+                            outputCard.body.push(this.name + " has lost wheel(s) and is Immobilized");
+                        } else {
+                            outputCard.body.push(this.name + " loses a track and is Immobilized");
+                        }
+                        this.token.set(SM.immobilized,true);
                     } else {
-                        outputCard.body.push(this.name + " loses a track and is Immobilized");
+                        outputCard.body.push("The shot does only superficial damage");
                     }
-                    this.token.set(SM.immobilized,true);
                     break;
                 case 4:
-                    outputCard.body.push(this.name + " is on fire!");
-                    this.token.set(SM.onfire,true);
+                    if (this.token.get(SM.onfire) === false) {
+                        outputCard.body.push(this.name + " is on Fire!");
+                        this.token.set(SM.onfire,true);
+                    } else {
+                        outputCard.body.push("The shot does only superficial damage");
+                    }
                     break;
                 case 5:
                     outputCard.body.push(this.name + ' is Destroyed!');
@@ -1274,7 +1290,7 @@ const Scenario = (() => {
         
 
         //remove all SM.shaken, fired, moved markers
-        //check for fire 
+        //check for fire - roll d6, on 1 fire is out, on 6 unit is destroyed
 
 
 
@@ -1328,6 +1344,11 @@ const Scenario = (() => {
                 let target = 5;
                 if (unit.experience === "Experienced") {target = 4};
                 if (unit.experience === "Veteran") {target = 3};
+                if (unit.token.get(SM.uncommand) === true && unit.radio === false) {
+                    outputCard.body.push("Unit's Commander is dead -1");
+                    target++;
+                }
+
                 outputCard.body.push(DisplayDice(roll,unit.faction,32) + " vs. " + target + "+");
                 outputCard.body.push("Experience Level: " + unit.experience);
                 if (roll >= target) {
@@ -1727,6 +1748,10 @@ log(hex)
             let label = cube.label();
             let prevLabel = (new Point(prev.left,prev.top)).label();
             if (label !== prevLabel) {
+                if (unit.token.get(SM.immobilized) === true) {
+                    label = prevLabel;
+                    sendChat("",unit.name + " Is Immobilized");
+                }
                 log(unit.name + ' is moving from ' + prevLabel + ' to ' + label)
                 //remove old occupied hexes
                 let index = HexMap[prevLabel].tokenIDs.indexOf(unit.id);
@@ -1739,7 +1764,7 @@ log(hex)
                 }
                 unit.label = label;
                 unit.cube = cube;
-                if (state.SC.turn > 0) {
+                if (state.SC.turn > 0 && label !== prevLabel) {
                     unit.token.set(SM.moved,true);
                 }
             }
