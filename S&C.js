@@ -1306,6 +1306,17 @@ log(weapon)
         }
         outputCard.body.push(shootTip + " with " + weapon.name);
 
+        let ap = parseInt(weapon.attack[losResult.distance]);
+        let attackTip = "Weapon AP: " + ap;
+        let armour = target.armour;
+        attackTip += "<br>Target's Armour: " + armour;
+        if (target.type.includes("Infantry")) {
+            armour += targetHex.infantry;
+            attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+        }
+
+
+        
 
 //7. COMPARE ATTACKER’S ATTACK POWER TO TARGET’S ARMOR
 //8. REMOVE UNIT FROM THE BOARD IF DESTROYED or replace with 1/2 squad
