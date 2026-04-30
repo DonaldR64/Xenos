@@ -84,6 +84,10 @@
             <br>
             <label>Side Skirts:</label><input type="checkbox" name="attr_skirts" value="1">
             <br>
+            <label>-1 Cover:</label><input type="checkbox" name="attr_cover1" value="1">
+            <br>
+
+
         </div>
 
     </div>    
@@ -202,6 +206,7 @@
             if (values.sniper === "1") {notes.push("Sniper")};            
             if (values.at === "1") {notes.push("AT Team")};
             if (values.skirts === "1") {notes.push("Side Skirts")};
+            if (values.cover1 === "1") {notes.push("-1 Cover")};
 
 
             setAttrs({
