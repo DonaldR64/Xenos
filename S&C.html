@@ -22,6 +22,14 @@
                 <option value="System Unit">System Unit</option>
             </select>
             <br>
+            <label for="attr_mode">Vehicle Mode:</label>
+            <select name="attr_mode">
+                <option value="" selected disabled hidden>Choose here</option>
+                <option value="Wheeled">Wheeled</option>
+                <option value="Half-Track">Half-Track</option>
+                <option value="Tracked">Tracked</option>
+            </select>
+            <br>
             <label for="attr_faction">Faction:</label>
             <select name="attr_faction">
                 <option value="" selected disabled hidden>Choose here</option>
@@ -75,31 +83,72 @@
                     <input type="checkbox" name="attr_deployed" id="radio" value="1">
                 </label>
             </li>
-
-            <label>Deployed 2:</label><input type="checkbox" name="attr_deployed2" value="1">
-            <label>Recon:</label><input type="checkbox" name="attr_recon" value="1">
-            <label>Transport:</label><input type="checkbox" name="attr_transport" value="1">
-            <label>Open Topped:</label><input type="checkbox" name="attr_openTopped" value="1">
-            <label>Airborne:</label><input type="checkbox" name="attr_airborne" value="1">
-            <label>HQ Unit:</label><input type="checkbox" name="attr_hq" value="1">
-            <label>Field Line:</label><input type="checkbox" name="attr_line" value="1">
-            <br>
-            <label for="attr_mode">Vehicle Mode:</label>
-            <select name="attr_mode">
-                <option value="" selected disabled hidden>Choose here</option>
-                <option value="Wheeled">Wheeled</option>
-                <option value="Half-Track">Half-Track</option>
-                <option value="Tracked">Tracked</option>
-            </select>
-            <label>Sniper:</label><input type="checkbox" name="attr_sniper" value="1">
-            <br>
-            <label>AT Weapon:</label><input type="checkbox" name="attr_at" value="1">
-            <br>
-            <label>Side Skirts:</label><input type="checkbox" name="attr_skirts" value="1">
-            <br>
-            <label>-1 Cover:</label><input type="checkbox" name="attr_cover1" value="1">
-            <br>
-
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Deployed 2: 
+                    <input type="checkbox" name="attr_deployed2" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Recon: 
+                    <input type="checkbox" name="attr_recon" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Transport: 
+                    <input type="checkbox" name="attr_transport" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Open Topped: 
+                    <input type="checkbox" name="attr_openTopped" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Airborne: 
+                    <input type="checkbox" name="attr_airborne" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    HQ: 
+                    <input type="checkbox" name="attr_hq" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Field Line: 
+                    <input type="checkbox" name="attr_line" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Sniper: 
+                    <input type="checkbox" name="attr_sniper" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    AT Weapon: 
+                    <input type="checkbox" name="attr_at" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Side Skirts: 
+                    <input type="checkbox" name="attr_skirts" id="radio" value="1">
+                </label>
+            </li>
+            <li>
+                <label for="radio"  style="word-wrap:break-word">
+                    Hard to Hit -1 Cover: 
+                    <input type="checkbox" name="attr_cover1" id="radio" value="1">
+                </label>
+            </li>
 
         </div>
 
