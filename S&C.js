@@ -1781,6 +1781,10 @@ log(hex)
                     label = prevLabel;
                     sendChat("",unit.name + " Is Immobilized");
                 }
+                if (unit.token.get(SM.supp) > 0) {
+                    label = prevLabel;
+                    sendChat("",unit.name + " Is Suppressed");
+                }
                 log(unit.name + ' is moving from ' + prevLabel + ' to ' + label)
                 //remove old occupied hexes
                 let index = HexMap[prevLabel].tokenIDs.indexOf(unit.id);
@@ -1795,6 +1799,12 @@ log(hex)
                 unit.cube = cube;
                 if (state.SC.turn > 0 && label !== prevLabel) {
                     unit.token.set(SM.moved,true);
+                }
+                if (label === prevLabel) {
+                    unit.token.set({
+                        left: prev.left,
+                        top: prev.top,
+                    })
                 }
             }
         } else {
