@@ -685,6 +685,7 @@ const Scenario = (() => {
                     let att = aa["weapon" + i + "Attack" + j] || "-";
                     attack.push(att);
                 }
+                attack[0] = attack[1];
                 let notes = aa["weapon" + i + "Notes"] || " ";
 
                 let sound = aa["weapon" + i + "Sound"];
@@ -701,6 +702,7 @@ const Scenario = (() => {
             this.token = token;
             this.cube = cube;
             this.label = label;
+
 
             if (this.type.includes("Squad")) {
                 this.team1ID = aa.team1ID || ""; //Rifle Team
@@ -1390,15 +1392,21 @@ const Scenario = (() => {
     }
 
     const Assault = (msg) => {
-        //only add to teams/squads, not D or S
+        //also use for overrun
+        //only add to teams/squads, not D or S and call Assault, for vehicle call Overrun
         if (!msg.selected) {return};
         let id = msg.selected[0]._id;
         let unit = UnitArray[id];
         if (!unit) {return};
-        SetupCard(unit.name,"Call Assault",unit.faction);
-        outputCard.body.push(unit.name + " can Assault a neighbouring Hex");
+        let action = "Assault";
+        if (unit.type === "Vehicle") {
+            action = "Overrun";            
+        }
+        SetupCard(unit.name,action,unit.faction);
+        outputCard.body.push(unit.name + " can Move into and " + action + " a neighbouring Hex");
         outputCard.body.push("Any Defending Units can Fire First if they have not Fired this Turn");
         unit.token.set(SM.assault,true);
+        unit.token.set(SM.moved,false);
         PrintCard();
     }
 
@@ -1410,7 +1418,6 @@ const Scenario = (() => {
         let targetHex = HexMap[target.label];
         let weapon = shooter.weapons[Tag[3]];
         let errorMsg = [];
-log(weapon)
         SetupCard(shooter.name,"Direct Fire",shooter.faction);
 
         if (shooter.token.get(SM.fired) === true) {
@@ -1431,10 +1438,6 @@ log(weapon)
 ///deployed 2 - both move and prior turn move ? how to track
         let indirect = false;
         let losResult = LOS(shooter,target);
-
-log(losResult)
-log(weapon)
-
 
         if ((losResult.distance > 4 || (losResult.distance > 3 && weapon.attack[4] === "-")) && weapon.notes.includes("Indirect")) {
             //allows indirect fire by unit at longer range
@@ -1459,6 +1462,27 @@ log(weapon)
             errorMsg.push("Not in Weapon's Range");
         }
         if (ErrorMsg(errorMsg) === true) {return};
+
+        shooterNote = "";
+        targetNote = "";
+
+        if (shooter.token.get(SM.assault) === true) {
+            if (shooter.type === "Vehicle") {
+                shooterNote = "Overrun";
+            } else {
+                shooterNote = "Assaulter";
+            }
+            targetNote = "Defender";
+        }
+        if (target.token.get(SM.assault) === true) {
+            if (target.type === "Vehicle") {
+                targetNote = "Overrun";
+            } else {
+                targetNote = "Assaulter";
+            }
+            shooterNote = "Defender";
+        }
+
 
         let zeroed = false;
         if (target.token.get(SM.zeroed) === true && shooter.zeroLabel === target.label) {
@@ -1520,28 +1544,50 @@ log(weapon)
             if (t>0) {outputCard.body.push([hr])};
             outputCard.body.push("[U]" + target.name + "[/u]");
             let dice = weapon.dice;
-            let mod = (indirect === true || target.token.get(SM.assault) === true || shooter.token.get(SM.assault) === true)? 0:targetHex.cover;
-            if (shooter.token.get(SM.assault) === true && shooter.faction === "US Airborne") {
+            let mod = 0;
+            let cover = targetHex.cover;
+            let shootTip = "";
+            if (indirect === true) {
+                cover = 0;
+                shootTip += "<br>Indirect Fire, No Terrain Cover";
+            }
+            if (targetNote === "Overrun") {
+                cover = 0;
+                shootTip += "<br>Overrun Unit gets no Terrain Cover";
+            }
+            if (targetNote === "Assaulter") {
+                cover = 0;
+                shootTip += "<br>Assaulting Unit gets no Terrain Cover";
+            }
+            if (targetNote === "Defender") {
+                cover = 0;
+                shootTip += "<br>Defending Unit gets no Terrain Cover";
+            }
+
+            if (shooterNote === "Assaulter" && shooter.faction === "US Airborne") {
                 dice++;
                 shootTip += "<br>+1 Dice for Airborne Assault";
             }
+            shootTip += (cover === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
+            mod += cover;
 
-            let shootTip = (mod === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
-            if (shooter.token.get(SM.assault) === true || target.token.get(SM.assault) === true) {
-                shootTip += " [Assault]";
-            }
-            if (target.token.get(SM.moved) === true && target.token.get(SM.assault) === false) {
+            if (target.token.get(SM.moved) === true && targetNote !== "Overrun" && targetNote !== "Assaulter") {
                 shootTip += "<br>Target Moved -1";
                 mod--;
             }
-            if (shooter.token.get(SM.moved) === true) {
+            if (shooter.token.get(SM.moved) === true && shooterNote !== "Assaulter" && shooterNote !== "Overrun") {
                 shootTip += "<br>Shooter Moved -1";
                 mod--;
             }
-            if (shooter.token.get(SM.assault) === true && shooter.token.get(SM.moved) === false) {
+            if (shooterNote === "Assaulter") {
                 shootTip += "<br>Shooter Assaulting -1";
                 mod--;
             }
+            if (shooterNote === "Overrun") {
+                shootTip += "<br>Shooter Overrunning -1";
+                mod--;
+            }
+
             if (shooter.token.get(SM.supp) !== false) {
                 let supp = parseInt(shooter.token.get(SM.supp));
                 shootTip += "<br>Shooter Suppressed -" + supp;
@@ -1588,15 +1634,20 @@ log(weapon)
                 let ap = parseInt(weapon.attack[losResult.distance]);
                 let attackTip = "Weapon AP: " + ap + "<br>vs."
                 let armour = DeepCopy(target.armour);
-                if (shooter.token.get(SM.assault) === true && target.openTopped === true) {
+                if (shooterNote === "Assault" && target.openTopped === true) {
                     armour = 0;
                 }
                 attackTip += "<br>Target's Armour: " + armour;
-                if (target.type.includes("Infantry") && shooter.token.get(SM.assault) === false) {
+
+                if (target.type.includes("Infantry") && targetNote !== "Defender") {
                     armour += targetHex.infantry;
                     attackTip += "<br>Terrain Armour: " + targetHex.infantry;
                 }
-                if (target.token.get(SM.assault) === true && armour > 0) {
+                if (target.note === "Overrun") {
+                    armour--;
+                    attackTip += "<br>Overrunning Unit has -1 Armour";
+                }
+                if (target.note === "Assaulter") {
                     armour--;
                     attackTip += "<br>Assaulting Unit has -1 Armour";
                 }
@@ -1640,8 +1691,7 @@ log(weapon)
                 }
             }
         }
-
-
+        
         shooter.token.set(SM.fired,true);
         PrintCard();
 
@@ -1675,7 +1725,13 @@ log(weapon)
         return false;
     }
 
+    const Overrun = (msg) => {
 
+
+
+
+
+    }
 
 
 
@@ -1979,7 +2035,7 @@ log(hex)
                 }
                 unit.label = label;
                 unit.cube = cube;
-                if (state.SC.turn > 0 && label !== prevLabel) {
+                if (state.SC.turn > 0 && label !== prevLabel && unit.token.set(SM.assault) === false) {
                     unit.token.set(SM.moved,true);
                 }
                 if (label === prevLabel) {
