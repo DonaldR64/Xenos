@@ -1490,7 +1490,8 @@ log(weapon)
             if (t>0) {outputCard.body.push([hr])};
             outputCard.body.push("[U]" + target.name + "[/u]");
             let dice = weapon.dice;
-            let mod = targetHex.cover;
+            let mod = (indirect === true)? 0:targetHex.cover;
+
             let shootTip = (mod === 0) ? "No Terrain Cover":"Terrain Cover " + mod;
             if (target.token.get(SM.moved) === true) {
                 shootTip += "<br>Target Moved -1";
@@ -1505,7 +1506,7 @@ log(weapon)
                 shootTip += "<br>Shooter Suppressed -" + supp;
                 mod-=supp;
             }
-            if (target.cover1 === true) {
+            if (target.cover1 === true && indirect === false) {
                 shootTip += "<br>Target hard to hit, -1 Cover";
                 mod--;
             }
