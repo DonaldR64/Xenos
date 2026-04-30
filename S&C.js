@@ -678,15 +678,9 @@ const Scenario = (() => {
                 if (!name || name === "") {continue};
                 let dice = parseInt(aa["weapon" + i + "Dice"]);
                 let attack = ["-"];
-                let maxRange = 1;
-                let flag = false;
                 for (let j=1;j<6;j++) {
                     let att = aa["weapon" + i + "Attack" + j] || "-";
                     attack.push(att);
-                    if (att === "-" && flag === false) {
-                        maxRange = j-1;
-                        flag = true;
-                    }
                 }
                 let notes = aa["weapon" + i + "Notes"] || " ";
 
@@ -695,7 +689,6 @@ const Scenario = (() => {
                     name: name,
                     dice: dice,
                     attack: attack,
-                    maxRange: maxRange,
                     notes: notes,
                     sound: sound,
                 }
@@ -1414,10 +1407,11 @@ log(weapon)
         if (losResult.los === false) {
             errorMsg.push("No LOS, " + losResult.losReason);
         }
-        if ((losResult.distance > weapon.maxRange) || losResult.distance > (weapon.maxRange + 1)) {
-            errorMsg.push("Out of Weapon's Range");
+        if (weapon.attack[losResult.distance] === "-") {
+            errorMsg.push("Not in Weapon's Range");
         }
 
+        
 
         if (ErrorMsg(errorMsg) === true) {return};
 
