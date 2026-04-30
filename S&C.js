@@ -1,5 +1,5 @@
 const Scenario = (() => {
-    const version = '2026.4.28';
+    const version = '2026.4.29';
     if (!state.SC) {state.SC = {}};
 
     const pageInfo = {};
@@ -1435,11 +1435,14 @@ log(weapon)
             shootTip += "<br>Target hard to hit, -1 Cover";
             mod--;
         }
-        if (weapon.notes.includes("+1 to Hit")) {
+        if (weapon.notes.toLowerCase().includes("+1 to hit")) {
             shootTip += "<br>Shooter has +1 to Hit";
             mod++;
         }
-
+        if (weapon.notes.toLowerCase().includes("-1 to hit")) {
+            shootTip += "<br>Shooter has -1 to Hit";
+            mod--;
+        }
 
 
 
