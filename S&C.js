@@ -666,7 +666,7 @@ const Scenario = (() => {
             this.experience = aa.experience || "Experienced";
             this.armour = parseInt(aa.armour);
             this.move = parseInt(aa.move);
-            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at","skirts"];
+            let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at","skirts","cover1"];
             _.each(notes,note => {
                 this[note] = (aa[note] === "1") ? true:false;
             })
@@ -1416,6 +1416,10 @@ log(weapon)
             let supp = parseInt(shooter.token.get(SM.supp));
             shootTip += "<br>Shooter Suppressed -" + supp;
             mod-=supp;
+        }
+        if (target.cover1 === true) {
+            shootTip += "<br>Target has -1 Cover Ability";
+            mod--;
         }
 
 
