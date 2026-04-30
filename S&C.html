@@ -66,7 +66,7 @@
             <label>Radio:</label><input type="checkbox" name="attr_radio" value="1">
             <label>Deployed:</label><input type="checkbox" name="attr_deployed" value="1">
             <label>Deployed 2:</label><input type="checkbox" name="attr_deployed2" value="1">
-            <label>Indirect Fire:</label><input type="checkbox" name="attr_indirect" value="1">
+            <label>Recon:</label><input type="checkbox" name="attr_recon" value="1">
             <label>Transport:</label><input type="checkbox" name="attr_transport" value="1">
             <label>Open Topped:</label><input type="checkbox" name="attr_openTopped" value="1">
             <label>Airborne:</label><input type="checkbox" name="attr_airborne" value="1">
@@ -199,12 +199,12 @@
 
 
     on("change:attrs sheet:opened", function() { 
-        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode","sniper","at","skirts",], function(values) {
+        getAttrs(["radio","deployed","deployed2","recon","transport","openTopped","airborne","hq","line","mode","sniper","at","skirts",], function(values) {
             let notes = [];
             if (values.radio === "1") {notes.push("Radio Equipped")};
             if (values.deployed === "1") {notes.push("Deployed")};
             if (values.deployed2 === "1") {notes.push("Deployed 2")};
-            if (values.indirect === "1") {notes.push("Indirect Fire")};
+            if (values.recon === "1") {notes.push("Recon")};
             if (values.transport === "1") notes.push("Transport");
             if (values.openTopped === "1") {notes.push("Open Topped")};
             if (values.airborne === "1") {notes.push("Airborne")};
