@@ -735,18 +735,19 @@ const Scenario = (() => {
             }
         }
 
-        Split(){
+        Split(label){
             //split unit into two teams
-            let token1 = summonToken(this.team1ID,this.token.get("left"),this.token.get("left"),100);
-            let token2 = summonToken(this.team2ID,this.token.get("left") + 15,this.token.get("left") + 15,100);
+            let token1 = summonToken(this.team1ID,this.token.get("left"),this.token.get("top"),100);
+            let token2 = summonToken(this.team2ID,this.token.get("left") + 15,this.token.get("top") + 15,100);
             let unit1 = new Unit(token1.get("id"));
             let unit2 = new Unit(token2.get("id"));
+            this.Casualty(false);
         }
 
         Half(){
             //squad taked damage and turns into team
             //this.team1ID is char ID
-            let token = summonToken(this.team1ID,this.token.get("left"),this.token.get("left"),100);
+            let token = summonToken(this.team1ID,this.token.get("left"),this.token.get("top"),100);
             let unit = new Unit(token.get("id"));
             unit.Suppress();
             this.Casualty(false);
@@ -1371,6 +1372,20 @@ const Scenario = (() => {
         PrintCard();
     }
 
+    const Split = (msg) => {
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        SetupCard(unit.name,"Split into Teams",unit.faction);
+        unit.Split();
+        outputCard.body.push(unit.name + " has split into its 2 Teams");
+        PrintCard();
+    }
+
+
+
+
     const Shoot = (msg) => {    
         let Tag = msg.content.split(";");
         let shooter = UnitArray[Tag[1]];
@@ -1986,6 +2001,9 @@ log(hex)
                 break;
             case '!CheckLOS':
                 CheckLOS(msg);
+                break;
+            case '!Split':
+                Split(msg);
                 break;
 
             case '!Roll':
