@@ -1462,6 +1462,7 @@ log(weapon)
                 armour += targetHex.infantry;
                 attackTip += "<br>Terrain Armour: " + targetHex.infantry;
             }
+            attackTip = '[](#" class="showtip" title="' + attackTip + ')';
             if (ap >= armour) {
                 if (target.type.includes("Infantry") || target.type === "Gun") {
                     if (shooter.sniper === true) {
