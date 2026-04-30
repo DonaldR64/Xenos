@@ -1400,6 +1400,8 @@ log(weapon)
         let indirect = false;
         let losResult = LOS(shooter,target);
 
+log(losResult)
+log(weapon)
 
 
         if ((losResult.distance > 4 || (losResult.distance > 3 && weapon.attack[4] === "-")) && weapon.notes.includes("Indirect")) {
@@ -1434,7 +1436,7 @@ log(weapon)
             let scatter = roll1 + roll2;
             outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
             if (scatter > 4 && scatter < 10) {
-                outputCard.body.push("Fire lands on Target");
+                outputCard.body.push("Fire Zeroes in on Target");
 //zero in
             } else {
                 let translate = [4,3,12,10,11,2];
@@ -1444,6 +1446,7 @@ log(weapon)
                 outputCard.body.push("Fire Scatters to the " + dir);
                 outputCard.body.push("Landing in Hex " + newLabel);
             }
+            outputCard.body.push("[hr]")
             //attacks all units in hex
             _.each(targetHex.tokenIDs,tokenID => {
                 let t2 = UnitArray[tokenID];
@@ -1453,7 +1456,7 @@ log(weapon)
             targets = [target];
         }
 
-        if (target.length === 0) {
+        if (targets.length === 0) {
             outputCard.body.push("No Targets Hit");
             //will skip next bit as length 0
         }
@@ -1462,6 +1465,7 @@ log(weapon)
         for (let t=0;t<targets.length;t++) {
             let target = targets[t];
             if (t>0) {outputCard.body.push([hr])};
+            outputCard.body.push("[U]" + target.name + "[/u]");
             let dice = weapon.dice;
             let mod = targetHex.cover;
             let shootTip = (mod === 0) ? "No Terrain Cover":"Terrain Cover " + mod;
@@ -1509,9 +1513,9 @@ log(weapon)
             shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+<br>" + shootTip;
 
             if (hits === 0) {
-                shootTip = '[Misses](#" class="showtip" title="' + shootTip + ')';
+                shootTip = '[Missed](#" class="showtip" title="' + shootTip + ')';
             } else {
-                shootTip = '[Hits](#" class="showtip" title="' + shootTip + ')';
+                shootTip = '[Hit](#" class="showtip" title="' + shootTip + ')';
             }
             outputCard.body.push(shootTip + " with " + weapon.name);
 
