@@ -134,6 +134,8 @@
             <h4 style="color: darkred;"><span name="attr_notes2"></span></h4>
             <h4 style="color: darkred;"><span name="attr_notes3"></span></h4>
             <h4 style="color: darkred;"><span name="attr_notes4"></span></h4>
+            <h4 style="color: darkred;"><span name="attr_notes5"></span></h4>            
+            <h4 style="color: darkred;"><span name="attr_notes6"></span></h4>
           </section>
 
 
@@ -216,6 +218,7 @@
             if (values.skirts === "1") {notes.push("Side Skirts")};
             if (values.cover1 === "1") {notes.push("-1 Cover")};
 
+            notes.sort();
 
             setAttrs({
                 "notes0": notes[0] || "",
@@ -223,6 +226,8 @@
                 "notes2": notes[2] || "",
                 "notes3": notes[3] || "",
                 "notes4": notes[4] || "",
+                "notes4": notes[5] || "",
+                "notes4": notes[6] || "",
             });
         });    
     });  
