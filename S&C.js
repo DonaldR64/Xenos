@@ -688,6 +688,7 @@ const Scenario = (() => {
                         flag = true;
                     }
                 }
+                let notes = aa["weapon" + i + "Notes"];
 
                 let sound = aa["weapon" + i + "Sound"];
                 let weapon = {
@@ -695,6 +696,7 @@ const Scenario = (() => {
                     dice: dice,
                     attack: attack,
                     maxRange: maxRange,
+                    notes: notes,
                     sound: sound,
                 }
                 weapons.push(weapon);
@@ -1421,6 +1423,13 @@ log(weapon)
             shootTip += "<br>Target hard to hit, -1 Cover";
             mod--;
         }
+        if (weapon.notes.includes("+1 to Hit")) {
+            shootTip += "<br>Shooter has +1 to Hit";
+            mod++;
+        }
+
+
+
 
 
         let rolls = [];
@@ -1456,7 +1465,7 @@ log(weapon)
             if (ap >= armour) {
                 if (target.type.includes("Infantry") || target.type === "Gun") {
                     if (shooter.sniper === true) {
-                        if (target.type.includes("Team")) {
+                        if (target.type.includes("Support")) {
                             outputCard.body.push(target.name + " Is Destroyed");
                             target.Casualty();
                         } else {
