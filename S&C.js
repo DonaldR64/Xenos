@@ -1383,7 +1383,7 @@ const Scenario = (() => {
         let weapon = shooter.weapons[Tag[3]];
         let errorMsg = [];
 log(weapon)
-        SetupCard(shooter.name,"Shoot",shooter.faction);
+        SetupCard(shooter.name,"Direct Fire",shooter.faction);
 
         if (shooter.token.get(SM.fired) === true) {
             errorMsg.push("Unit already Fired");
@@ -1401,17 +1401,24 @@ log(weapon)
             errorMsg.push("Unit moved and cannot shoot this turn");
         }
 ///deployed 2 - both move and prior turn move ? how to track
-
-
-        let losResult = LOS(shooter,target);
-        if (losResult.los === false) {
-            errorMsg.push("No LOS, " + losResult.losReason);
-        }
         if (weapon.attack[losResult.distance] === "-") {
             errorMsg.push("Not in Weapon's Range");
         }
 
-        
+        let indirect = false;
+        let losResult = LOS(shooter,target);
+        if (losResult.los === false) {
+            if (weapon.notes.includes("Indirect")) {
+                if (Indirect(shooter,target) === false) {
+                    errorMsg.push("No Observers with LOS");
+                } else {
+                    indirect = true;
+                    outputCard.subtitle = "Indirect Fire";
+                }
+            } else {
+                errorMsg.push("No LOS, " + losResult.losReason);
+            }
+        }
 
         if (ErrorMsg(errorMsg) === true) {return};
 
@@ -1525,7 +1532,32 @@ log(weapon)
     }
 
 
-
+    const Indirect = (shooter,target) => {
+        //does adjacent unit have LOS
+        let neighbours = HexMap[shooter.label].cube.neighbours();
+        for (let i=0;i<6;i++) {
+            let hex2 = HexMap[neighbours[i].label()];
+            for (let j=0;j<hex2.tokenIDs.length;j++) {
+                let unit2 = UnitArray[hex2.tokenIDs[j]];
+                let los = LOS(unit2,target);
+                if (los.los === true) {
+                    return true;
+                }
+            }
+        }
+        //if not, and shooter has radio, does recon/hq with radio have LOS?
+        if (shooter.radio === true) {
+            _.each(UnitArray,unit2 => {
+                if (unit2.faction === shooter.faction && unit2.radio === true && (unit2.recon === true || unit2.hq === true)) {
+                    let los = LOS(unit2,target);
+                    if (los.los === true) {
+                        return true;
+                    }
+                }
+            })
+        }
+        return false;
+    }
 
 
 
