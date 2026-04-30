@@ -1553,7 +1553,7 @@ const Scenario = (() => {
             }
             if (targetNote === "Overrun") {
                 cover = 0;
-                shootTip += "<br>Overrun Unit gets no Terrain Cover";
+                shootTip += "<br>Overrunning Unit gets no Terrain Cover";
             }
             if (targetNote === "Assaulter") {
                 cover = 0;
