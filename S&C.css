@@ -79,6 +79,12 @@ section {
   justify-content: center;
 }
 
+[type="checkbox"]
+{
+    vertical-align:middle;
+}
+
+
 
 /*----------------- Text & Input styling -----------------*/
 
