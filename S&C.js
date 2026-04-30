@@ -688,7 +688,7 @@ const Scenario = (() => {
                         flag = true;
                     }
                 }
-                let notes = aa["weapon" + i + "Notes"];
+                let notes = aa["weapon" + i + "Notes"] || " ";
 
                 let sound = aa["weapon" + i + "Sound"];
                 let weapon = {
