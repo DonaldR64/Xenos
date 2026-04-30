@@ -122,6 +122,7 @@ const Scenario = (() => {
         uncommand: "status_RIP::2006647",
         shaken: "status_Terror::181068",
         zeroed: "status_Bullseye-Red::2006541",
+        assault: "status_Fast::5868456",
     }
 
     const Capit = (val) => {
@@ -1385,7 +1386,18 @@ const Scenario = (() => {
         PrintCard();
     }
 
-
+    const Assault = (msg) => {
+        //only add to teams/squads, not D or S
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        SetupCard(unit.name,"Call Assault",unit.faction);
+        outputCard.body.push(unit.name + " can Assault a neighbouring Hex");
+        outputCard.body.push("Any Defending Units can Fire First if they have not Fired this Turn");
+        unit.token.set(SM.assault,true);
+        PrintCard();
+    }
 
 
     const Shoot = (msg) => {    
@@ -1505,15 +1517,26 @@ log(weapon)
             if (t>0) {outputCard.body.push([hr])};
             outputCard.body.push("[U]" + target.name + "[/u]");
             let dice = weapon.dice;
-            let mod = (indirect === true)? 0:targetHex.cover;
+            let mod = (indirect === true || target.token.get(SM.assault) === true || shooter.token.get(SM.assault) === true)? 0:targetHex.cover;
+            if (shooter.token.get(SM.assault) === true && shooter.faction === "US Airborne") {
+                dice++;
+                shootTip += "<br>+1 Dice for Airborne Assault";
+            }
 
-            let shootTip = (mod === 0) ? "No Terrain Cover":"Terrain Cover " + mod;
-            if (target.token.get(SM.moved) === true) {
+            let shootTip = (mod === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
+            if (shooter.token.get(SM.assault) === true || target.token.get(SM.assault) === true) {
+                shootTip += " [Assault]";
+            }
+            if (target.token.get(SM.moved) === true && target.token.get(SM.assault) === false) {
                 shootTip += "<br>Target Moved -1";
                 mod--;
             }
             if (shooter.token.get(SM.moved) === true) {
                 shootTip += "<br>Shooter Moved -1";
+                mod--;
+            }
+            if (shooter.token.get(SM.assault) === true && shooter.token.get(SM.moved) === false) {
+                shootTip += "<br>Shooter Assaulting -1";
                 mod--;
             }
             if (shooter.token.get(SM.supp) !== false) {
@@ -1549,7 +1572,7 @@ log(weapon)
             }
             rolls.sort();
             rolls.reverse();
-            shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+<br>" + shootTip;
+            shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+" + shootTip;
 
             if (hits === 0) {
                 shootTip = '[Missed](#" class="showtip" title="' + shootTip + ')';
@@ -1561,12 +1584,22 @@ log(weapon)
             if (hits > 0) {
                 let ap = parseInt(weapon.attack[losResult.distance]);
                 let attackTip = "Weapon AP: " + ap + "<br>vs."
-                let armour = target.armour;
+                let armour = DeepCopy(target.armour);
+                if (shooter.token.get(SM.assault) === true && target.openTopped === true) {
+                    armour = 0;
+                }
                 attackTip += "<br>Target's Armour: " + armour;
-                if (target.type.includes("Infantry")) {
+                if (target.type.includes("Infantry") && shooter.token.get(SM.assault) === false) {
                     armour += targetHex.infantry;
                     attackTip += "<br>Terrain Armour: " + targetHex.infantry;
                 }
+                if (target.token.get(SM.assault) === true && armour > 0) {
+                    armour--;
+                    attackTip += "<br>Assaulting Unit has -1 Armour";
+                }
+
+                armour = Math.max(0,armour);
+
                 attackTip = '[🎲](#" class="showtip" title="' + attackTip + ')';
                 if (ap >= armour) {
                     if (target.type.includes("Infantry") || target.type === "Gun") {
@@ -1927,7 +1960,7 @@ log(hex)
                     label = prevLabel;
                     sendChat("",unit.name + " Is Immobilized");
                 }
-                if (unit.token.get(SM.supp) > 0) {
+                if (unit.token.get(SM.supp) > 0 && unit.token.get(SM.assault) === false) {
                     label = prevLabel;
                     sendChat("",unit.name + " Is Suppressed");
                 }
@@ -2022,6 +2055,9 @@ log(hex)
                 break;
             case '!Split':
                 Split(msg);
+                break;
+            case '!Assault':
+                Assault(msg);
                 break;
 
             case '!Roll':
