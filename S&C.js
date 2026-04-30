@@ -1436,22 +1436,30 @@ log(weapon)
             let scatter = roll1 + roll2;
             outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
             if (scatter > 4 && scatter < 10) {
-                outputCard.body.push("Fire Zeroes in on Target");
+                outputCard.body.push("Fire Zeroed in on Hex");
 //zero in
             } else {
                 let translate = [4,3,12,10,11,2];
                 let dir = DIRECTIONS[translate.indexOf(scatter)];
                 let newLabel = targetHex.cube.neighbour(dir).label();
                 targetHex = HexMap[newLabel];
-                outputCard.body.push("Fire Scatters to the " + dir);
-                outputCard.body.push("Landing in Hex " + newLabel);
+                if (targetHex && targetHex.name !== "Offboard") {
+                    outputCard.body.push("Fire Scatters to the " + dir);
+                    outputCard.body.push("Landing in Hex " + newLabel);
+                } else {
+                    outputCard.body.push("Fire Scatters Offboard");
+                }
             }
             outputCard.body.push("[hr]")
             //attacks all units in hex
-            _.each(targetHex.tokenIDs,tokenID => {
-                let t2 = UnitArray[tokenID];
-                targets.push(t2);
-            })
+            if (targetHex) {
+                 _.each(targetHex.tokenIDs,tokenID => {
+                    let t2 = UnitArray[tokenID];
+                    if (t2) {
+                        targets.push(t2);
+                    }
+                })
+            }
         } else {
             targets = [target];
         }
