@@ -737,14 +737,10 @@ const Scenario = (() => {
 
         Split(){
             //split unit into two teams
-
-
-
-        }
-
-        Merge(){
-            //merge two teams into 1
-
+            let token1 = summonToken(this.team1ID,this.token.get("left"),this.token.get("left"),100);
+            let token2 = summonToken(this.team2ID,this.token.get("left") + 15,this.token.get("left") + 15,100);
+            let unit1 = new Unit(token1.get("id"));
+            let unit2 = new Unit(token2.get("id"));
         }
 
         Half(){
@@ -1401,24 +1397,36 @@ log(weapon)
             errorMsg.push("Unit moved and cannot shoot this turn");
         }
 ///deployed 2 - both move and prior turn move ? how to track
-        if (weapon.attack[losResult.distance] === "-") {
-            errorMsg.push("Not in Weapon's Range");
-        }
-
         let indirect = false;
         let losResult = LOS(shooter,target);
+
+
+
+        if ((losResult.distance > 4 || (losResult.distance > 3 && weapon.attack[4] === "-")) && weapon.notes.includes("Indirect")) {
+            //allows indirect fire by unit at longer range
+            losResult.distance = (weapon.attack[4] === "-") ? 3:4;
+            outputCard.subtitle = "Indirect Fire";
+            indirect = true;
+        }
+
         if (losResult.los === false) {
             if (weapon.notes.includes("Indirect")) {
+                outputCard.subtitle = "Indirect Fire";
+                indirect = true;
                 if (Indirect(shooter,target) === false) {
                     errorMsg.push("No Observers with LOS");
-                } else {
-                    indirect = true;
-                    outputCard.subtitle = "Indirect Fire";
                 }
             } else {
                 errorMsg.push("No LOS, " + losResult.losReason);
             }
         }
+
+        if (weapon.attack[losResult.distance] === "-") {
+            errorMsg.push("Not in Weapon's Range");
+        }
+
+
+
 
         if (ErrorMsg(errorMsg) === true) {return};
 
