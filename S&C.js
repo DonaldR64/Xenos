@@ -1403,7 +1403,7 @@ log(weapon)
 
         let dice = weapon.dice;
         let mod = targetHex.cover;
-        let shootTip = (mod === 0) ? "No Cover":"Cover " + mod;
+        let shootTip = (mod === 0) ? "No Terrain Cover":"Terrain Cover " + mod;
         if (target.token.get(SM.moved) === true) {
             shootTip += "<br>Target Moved -1";
             mod--;
@@ -1418,7 +1418,7 @@ log(weapon)
             mod-=supp;
         }
         if (target.cover1 === true) {
-            shootTip += "<br>Target has -1 Cover Ability";
+            shootTip += "<br>Target hard to hit, -1 Cover";
             mod--;
         }
 
@@ -1685,10 +1685,14 @@ log(hex)
         } else {
             outputCard.body.push("There is LOS to Target");
             if (targetHex.cover === 0) {
-                outputCard.body.push("Target has no Cover");
+                outputCard.body.push("Target has no Terrain Cover");
             } else {
                 outputCard.body.push("Target has Cover of " + targetHex.cover);
             }
+            if (target.cover1 === true) {
+                outputCard.body.push("Target is hard to hit, -1 Cover");
+            }
+
             if (target.type.includes("Infantry") && targetHex.infantry > 0) {
                 outputCard.body.push("Target has Armour Bonus of " + targetHex.infantry);
             }
