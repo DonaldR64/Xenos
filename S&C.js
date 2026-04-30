@@ -719,7 +719,8 @@ const Scenario = (() => {
         Suppress(){
             let level = parseInt(this.token.get(SM.supp)) || 0;
             level++;
-            this.token.set(SM.supp,level);
+            this.token.set(SM.supp,false); //zeroes
+            this.token.set(SM.supp,level); //sets to new level
         }
 
         Rally(){
@@ -750,8 +751,10 @@ const Scenario = (() => {
         Half(){
             //squad taked damage and turns into team
             //this.team1ID is char ID
+            let markers = this.token.get("statusmarkers");
             let token = summonToken(this.team1ID,this.token.get("left"),this.token.get("top"),100);
             let unit = new Unit(token.get("id"));
+            unit.token.set("statusmarkers",markers);
             unit.Suppress();
             this.Casualty(false);
         }
