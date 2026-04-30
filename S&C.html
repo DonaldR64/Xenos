@@ -199,7 +199,7 @@
 
 
     on("change:attrs sheet:opened", function() { 
-        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode","sniper","at","skirts"], function(values) {
+        getAttrs(["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","mode","sniper","at","skirts","cover1"], function(values) {
             let notes = [];
             if (values.radio === "1") {notes.push("Radio Equipped")};
             if (values.deployed === "1") {notes.push("Deployed")};
