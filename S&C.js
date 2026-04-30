@@ -777,63 +777,76 @@ const Scenario = (() => {
         Damage(ap) {
             //vehicle damage
             let damageRoll = randomInteger(6);
+            let damageTip = "<br>Roll: " + damageRoll;
             let damageResult = damageRoll;
-            damageResult -= this.armour;
+
             damageResult += ap;
+            damageTip += "<br>Weapon AP +" + ap;
+
+            damageResult -= this.armour;
+            damageTip += "<br>Armour: -" + this.armour;
+
             if (this.token.get(SM.flanked1) === true) {
                 damageResult++;
+                damageTip += "<br>Flanked +1";
             }
             if (this.token.get(SM.flanked2) === true) {
                 damageResult += 2;
+                damageTip += "<br>Flanked +2";
             }
             if (this.skirts === true) {
                 damageResult--;
+                damageTip += "<br>Armour Skirting -1";
             }
             damageResult = Math.max(Math.min(5,damageResult),1);
+
+            damageTip = "Net " + damageResult + damageTip;
+            damageTip = '[🎲](#" class="showtip" title="' + damageTip + ')';
+
             switch(damageResult) {
                 case 1:
                     if (this.token.get(SM.shaken) === false) {
-                        outputCard.body.push(this.name + ' is Shaken');
+                        outputCard.body.push(damageTip + ' The Crew is Shaken, the Unit cannot fire this turn');
                         this.token.set(SM.shaken,true);
                     } else {
-                        outputCard.body.push("The shot does only superficial damage");
+                        outputCard.body.push(damageTip + " The shot does only superficial damage");
                     }
                     break;
                 case 2:
                     if (this.token.get(SM.uncommand) === false) {
                         let roll = randomInteger(2);
                         if (roll === 1 || this.radio === false) {
-                            outputCard.body.push(this.name + " has lost its Commander");
+                            outputCard.body.push(damageTip + " The Vehicle has lost its Commander");
                         } else {
-                            outputCard.body.push(this.name + " has had its radio destroyed");
+                            outputCard.body.push(damageTip + " The Vehicle has had its radio destroyed");
                         }
                         this.token.set(SM.uncommand,true);
                     } else {
-                        outputCard.body.push("The shot does only superficial damage");
+                        outputCard.body.push(damageTip + " The shot does only superficial damage");
                     }
                     break;
                 case 3:
                     if (this.token.get(SM.immobilized) === false) {
                         if (this.mode === "Wheeled") {
-                            outputCard.body.push(this.name + " has lost wheel(s) and is Immobilized");
+                            outputCard.body.push(damageTip + " The Vehicle has lost wheel(s) and is Immobilized");
                         } else {
-                            outputCard.body.push(this.name + " loses a track and is Immobilized");
+                            outputCard.body.push(damageTip + " The Vehicle has lost a track and is Immobilized");
                         }
                         this.token.set(SM.immobilized,true);
                     } else {
-                        outputCard.body.push("The shot does only superficial damage");
+                        outputCard.body.push(damageTip + " The shot does only superficial damage");
                     }
                     break;
                 case 4:
                     if (this.token.get(SM.onfire) === false) {
-                        outputCard.body.push(this.name + " is on Fire!");
+                        outputCard.body.push(damageTip + " The Vehicle is on Fire!");
                         this.token.set(SM.onfire,true);
                     } else {
-                        outputCard.body.push("The shot does only superficial damage");
+                        outputCard.body.push(damageTip + " The shot does only superficial damage");
                     }
                     break;
                 case 5:
-                    outputCard.body.push(this.name + ' is Destroyed!');
+                    outputCard.body.push(damageTip + ' The Vehicle is Destroyed!');
                     this.Casualty();
                     break;
             }
@@ -1391,6 +1404,11 @@ log(weapon)
         if (shooter.at === true && target.type.includes("Infantry")) {
             errorMsg.push("Cannot target Infantry");
         }
+        if (shooter.token.get(SM.moved) === true && (shooter.deployed === true || shooter.deployed2 === true)) {
+            errorMsg.push("Unit moved and cannot shoot this turn");
+        }
+///deployed 2 - both move and prior turn move ? how to track
+
 
         let losResult = LOS(shooter,target);
         if (losResult.los === false) {
@@ -1455,38 +1473,39 @@ log(weapon)
 
         if (hits > 0) {
             let ap = parseInt(weapon.attack[losResult.distance]);
-            let attackTip = "Weapon AP: " + ap;
+            let attackTip = "Weapon AP: " + ap + "<br>vs."
             let armour = target.armour;
             attackTip += "<br>Target's Armour: " + armour;
             if (target.type.includes("Infantry")) {
                 armour += targetHex.infantry;
                 attackTip += "<br>Terrain Armour: " + targetHex.infantry;
             }
-            attackTip = '[](#" class="showtip" title="' + attackTip + ')';
+            attackTip = '[🎲](#" class="showtip" title="' + attackTip + ')';
             if (ap >= armour) {
                 if (target.type.includes("Infantry") || target.type === "Gun") {
                     if (shooter.sniper === true) {
                         if (target.type.includes("Support")) {
-                            outputCard.body.push(target.name + " Is Destroyed");
+                            outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
                             target.Casualty();
                         } else {
-                            outputCard.body.push(target.name + " is Suppressed by Sniper Fire");
+                            outputCard.body.push(attackTip + " " + target.name + " is Suppressed by Sniper Fire");
                             target.Suppress();
                         }
                     } else {
                         if (target.type.includes("Squad")) {
-                            outputCard.body.push(target.name + " is Supressed and reduced to a Team");
+                            outputCard.body.push(attackTip + " " + target.name + " is Supressed and reduced to a Team");
                             target.Half();
                         } else {
-                            outputCard.body.push(target.name + " Is Destroyed");
+                            outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
                             target.Casualty();
                         }
                     }
                 } else {
+                    outputCard.body.push(attackTip + " " + target.name + " takes Damage");
                     target.Damage(ap);
                 }
             } else {
-                outputCard.body.push("Target survives the fire");
+                outputCard.body.push(attackTip + " Target survives the fire");
                 if (target.armour > 0 && ap > 1) {
                     outputCard.body.push("Target is Flanked for rest of the Turn");
                     target.Flanked();
