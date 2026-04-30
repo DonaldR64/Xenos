@@ -121,6 +121,7 @@ const Scenario = (() => {
         immobilized: "status_Paralyzed::2006491",
         uncommand: "status_RIP::2006647",
         shaken: "status_Terror::181068",
+        zeroed: "status_Bullseye-Red::2006541",
     }
 
     const Capit = (val) => {
@@ -671,6 +672,7 @@ const Scenario = (() => {
                 this[note] = (aa[note] === "1") ? true:false;
             })
             this.mode = aa.mode;
+            this.zeroLabel = "";
 
             let weapons = [];
             for (let i=1;i<3;i++) {
@@ -1443,28 +1445,38 @@ log(weapon)
         }
         if (ErrorMsg(errorMsg) === true) {return};
 
+        let zeroed = false;
+        if (target.token.get(SM.zeroed) === true && shooter.zeroLabel === target.label) {
+            zeroed = true;
+        }
         let targets = [];
         if (indirect === true) {
-            //check for scatter
-            let roll1 = randomInteger(6);
-            let roll2 = randomInteger(6);
-            let scatter = roll1 + roll2;
-            outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
-            if (scatter > 4 && scatter < 10) {
-                outputCard.body.push("Fire Zeroed in on Hex");
-//zero in
-            } else {
-                let translate = [4,3,12,10,11,2];
-                let dir = DIRECTIONS[translate.indexOf(scatter)];
-                let newLabel = targetHex.cube.neighbour(dir).label();
-                targetHex = HexMap[newLabel];
-                if (targetHex && targetHex.name !== "Offboard") {
-                    outputCard.body.push("Fire Scatters to the " + dir);
-                    outputCard.body.push("Landing in Hex " + newLabel);
+            if(zeroed === false) {
+                //check for scatter
+                let roll1 = randomInteger(6);
+                let roll2 = randomInteger(6);
+                let scatter = roll1 + roll2;
+                outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
+                if (scatter > 4 && scatter < 10) {
+                    outputCard.body.push("Fire Zeroed in on Target(s)");
+                    zeroed = true;
+                    shooter.zeroLabel = target.label;
                 } else {
-                    outputCard.body.push("Fire Scatters Offboard");
-                }
+                    let translate = [4,3,12,10,11,2];
+                    let dir = DIRECTIONS[translate.indexOf(scatter)];
+                    let newLabel = targetHex.cube.neighbour(dir).label();
+                    targetHex = HexMap[newLabel];
+                    if (targetHex && targetHex.name !== "Offboard") {
+                        outputCard.body.push("Fire Scatters to the " + dir);
+                        outputCard.body.push("Landing in Hex " + newLabel);
+                    } else {
+                        outputCard.body.push("Fire Scatters Offboard");
+                    }
+                } 
+            } else {
+                outputCard.body.push("Fire is Already Zeroed In");
             }
+
             outputCard.body.push("[hr]")
             //attacks all units in hex
             if (targetHex) {
@@ -1472,6 +1484,9 @@ log(weapon)
                     let t2 = UnitArray[tokenID];
                     if (t2) {
                         targets.push(t2);
+                        if (zeroed) {
+                            t2.token.set(SM.zeroed,true);
+                        }
                     }
                 })
             }
@@ -1936,6 +1951,8 @@ log(hex)
                         left: prev.left,
                         top: prev.top,
                     })
+                } else {
+                    unit.token.set(SM.zeroed,false);
                 }
             }
         } else {
