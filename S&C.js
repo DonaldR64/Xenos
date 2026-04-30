@@ -1403,10 +1403,16 @@ const Scenario = (() => {
             action = "Overrun";            
         }
         SetupCard(unit.name,action,unit.faction);
-        outputCard.body.push(unit.name + " can Move into and " + action + " a neighbouring Hex");
-        outputCard.body.push("Any Defending Units can Fire First if they have not Fired this Turn");
-        unit.token.set(SM.assault,true);
-        unit.token.set(SM.moved,false);
+        if (unit.token.get(SM.fired) === true) {
+            outputCard.body.push("Unit has already Attacked");
+        } else if (unit.token.get(SM.moved) === true) {
+            outputCard.body.push("Unit has already Moved");
+        } else {
+            outputCard.body.push(unit.name + " can Move into and " + action + " a neighbouring Hex");
+            outputCard.body.push("Any Defending Units can Fire First if they have not Fired this Turn");
+            unit.token.set(SM.assault,true);
+            unit.token.set(SM.moved,false);
+        }
         PrintCard();
     }
 
