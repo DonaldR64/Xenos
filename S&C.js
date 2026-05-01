@@ -1553,14 +1553,13 @@ const Scenario = (() => {
                 let trampleRoll = randomInteger(6);
                 let trampleTip = "Roll: " + trampleRoll;
                 let result = trampleRoll + shooter.armour - 1 + targetHex.cover;
-                trampleTip += "<br>Armour: +" + shooterArmour;
+                trampleTip += "<br>Armour: +" + shooter.armour;
                 trampleTip += "<br>Moving: -1";
                 trampleTip += "<br>Cover: " + targetHex.cover;
-                let target = targetHex.infantry;
-                trampleTip = "Result: " + result + " vs. " + target +"+";
+                let need = targetHex.infantry;
+                trampleTip = "Result: " + result + " vs. " + need +"+";
                 trampleTip = '[🎲](#" class="showtip" title="' + trampleTip + ')';
-
-                if (result >= target) {
+                if (result >= need) {
                     if (target.type.includes("Squad")) {
                         outputCard.body.push(trampleTip + " " + target.name + " is Supressed and reduced to a Team");
                         target.Half();
