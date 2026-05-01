@@ -1329,6 +1329,9 @@ const Scenario = (() => {
                 unit.token.set(SM[marker],false);
                 unit.Fire();
                 unit.Rally();
+                if (unit.name.includes("Smoke") || unit.name.includes("Phosphorus")) {
+                    unit.Casualty(false);
+                }
             })
         })
 
