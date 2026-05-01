@@ -117,6 +117,7 @@ const Scenario = (() => {
         flanked2: "status_letters_and_numbers0229::5982147",
         fired: "status_Shell::5553215",
         supp: "status_yellow",
+        rallied: "status_interdiction",
         onfire: "status_Hot-or-On-Fire-2::2006479",
         immobilized: "status_Paralyzed::2006491",
         uncommand: "status_RIP::2006647",
@@ -727,6 +728,9 @@ const Scenario = (() => {
 
         Rally(){
             let level = parseInt(this.token.get(SM.supp)) || 0;
+            if (level === 1) {
+                this.token.set(SM.rallied,true);
+            }
             level--;
             if (level <= 0) {level = false};
             this.token.set(SM.supp,level);
@@ -848,14 +852,23 @@ const Scenario = (() => {
                     this.Casualty();
                     break;
             }
-
-
-
-
-
-
         }
 
+        Fire() {
+            if (this.token.get(SM.onfire) === false) {return};
+            let roll = randomInteger(6);
+            SetupCard(this.name,"Fire",this.faction);
+            if (roll === 1) {
+                outputCard.body.push("The Crew get the Fire Out");
+                this.token.set(SM.onfire,false);
+            } else if (roll === 6) {
+                outputCard.body.push("The Fire hits Fuel or Ammo, the Vehicle is Destroyed");
+                this.Casualty();
+            } else {
+                outputCard.body.push("The Fire continues to burn");
+            }
+            PrintCard();
+        }
 
 
 
@@ -1302,10 +1315,24 @@ const Scenario = (() => {
     }
 
     const NextTurn = () => {
-        
+        let turn = state.SC.turn;
 
-        //remove all SM.shaken, fired, moved markers
-        //check for fire - roll d6, on 1 fire is out, on 6 unit is destroyed
+        turn++;
+        state.SC.turn = turn;
+
+        SetupCard("Turn " + turn,"","Neutral");
+        PrintCard();
+
+        let removals = ["shaken","fired","moved","flanked1","flanked2","assault","shaken","rallied"];
+        _.each(UnitArray,unit => {
+            _.each(removals,marker => {
+                unit.token.set(SM[marker],false);
+                unit.Fire();
+                unit.Rally();
+            })
+        })
+
+
 
 
 
@@ -2052,6 +2079,11 @@ log(hex)
                     label = prevLabel;
                     sendChat("",unit.name + " Is Suppressed");
                 }
+                if (unit.token.get(SM.rallied) === true) {
+                    label = prevLabel;
+                    sendChat("",unit.name + " Just Rallied");
+                }
+
                 log(unit.name + ' is moving from ' + prevLabel + ' to ' + label)
                 //remove old occupied hexes
                 let index = HexMap[prevLabel].tokenIDs.indexOf(unit.id);
