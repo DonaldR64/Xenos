@@ -1504,6 +1504,13 @@ const Scenario = (() => {
                 errorMsg.push("No LOS, " + losResult.losReason);
             }
         }
+        
+        _.each(shooterHex.tokenIDs,tokenID => {
+            let u2 = UnitArray[tokenID];
+            if (u2.name.includes("Smoke")) {
+                errorMsg.push("Cannot Fire due to Smoke");
+            }
+        })
 
         if (weapon.attack[losResult.distance] === "-") {
             errorMsg.push("Not in Weapon's Range");
