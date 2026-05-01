@@ -1536,6 +1536,17 @@ const Scenario = (() => {
             indirect = true;
         }
 
+        let smokeInHex = false; //preexisting smoke
+        _.each(targetHex.tokenIDs,tokenID => {
+            let u2 = UnitArray[tokenID];
+            if (u2.name.includes("Smoke")) {
+                smokeInHex = true;
+            }
+        })
+
+
+
+
         let zeroed = false;
         if (target.token.get(SM.zeroed) === true && shooter.zeroLabel === target.label) {
             zeroed = true;
@@ -1640,6 +1651,10 @@ const Scenario = (() => {
                     if (targetNote === "Defender") {
                         cover = 0;
                         shootTip += "<br>Defending Unit gets no Terrain Cover";
+                    }
+                    if (smokeInHex === true) {
+                        cover -= 2;
+                        shootTip += "<br>Smoke in Hex -2 Cover";
                     }
 
                     if (shooterNote === "Assaulter" && shooter.faction === "US Airborne") {
@@ -2043,7 +2058,7 @@ log(hex)
                 //smoke or white phosphorus
                 _.each(interHex.tokenIDs,tokenID => {
                     let u2 = UnitArray[tokenID];
-                    if (u2.name.includes("Smoke")) {
+                    if (u2.name.includes("Smoke") || u2.name.includes("Phosphorus")) {
                         los[side] = false;
                         losReason[side] = "Smoke";
                     }
