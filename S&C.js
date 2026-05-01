@@ -1507,8 +1507,7 @@ const Scenario = (() => {
                     zeroed = true;
                     shooter.zeroLabel = target.label;
                 } else {
-                    let translate = [4,3,12,10,11,2];
-                    let dir = DIRECTIONS[translate.indexOf(scatter)];
+                    let dir = DIRECTIONS[randomInteger(6)];
                     let newLabel = targetHex.cube.neighbour(dir).label();
                     targetHex = HexMap[newLabel];
                     if (targetHex && targetHex.name !== "Offboard") {
