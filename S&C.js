@@ -1535,6 +1535,15 @@ const Scenario = (() => {
         if (whitePhos === true || smoke === true) {
             indirect = true;
         }
+        if (whitePhos === true) {
+            weapon = {
+                name: "White Phosphorus",
+                dice: 2,
+                attack: [1,1,1,1,1],
+                notes: "Ignores Terrain",
+                sound: "Mortar",
+            }
+        }
 
         let smokeInHex = false; //preexisting smoke
         _.each(targetHex.tokenIDs,tokenID => {
@@ -1640,6 +1649,10 @@ const Scenario = (() => {
                         cover = 0;
                         shootTip += "<br>Indirect Fire, No Terrain Cover";
                     }
+                    if (weapon.notes.includes("Ignores Terrain")) {
+                        cover = 0;
+                        shootTip += "<br>" + weapon.name + " Ignores Cover";
+                    }
                     if (targetNote === "Overrun") {
                         cover = 0;
                         shootTip += "<br>Overrunning Unit gets no Terrain Cover";
@@ -1733,8 +1746,12 @@ const Scenario = (() => {
                         attackTip += "<br>Target's Armour: " + armour;
 
                         if (target.type.includes("Infantry") && targetNote !== "Defender") {
-                            armour += targetHex.infantry;
-                            attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+                            if (weapon.notes.includes("Ignores Terrain")) {
+                                attackTip += "<br>" + weapon.name + " Ignores Terrain";
+                            } else {
+                                armour += targetHex.infantry;
+                                attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+                            }
                         }
                         if (target.note === "Overrun") {
                             armour--;
@@ -1787,7 +1804,9 @@ const Scenario = (() => {
             }
         }
 
-
+        if (whitePhos === true) {
+            outputCard.body.push("Any surviving units must exit the Hex");
+        }
         shooter.token.set(SM.fired,true);
         PrintCard();
 
