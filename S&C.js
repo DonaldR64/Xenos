@@ -1550,9 +1550,29 @@ const Scenario = (() => {
             if (t>0) {outputCard.body.push([hr])};
             outputCard.body.push("[U]" + target.name + "[/u]");
             if (shooterNote === "Overrun") {
-                
+                let trampleRoll = randomInteger(6);
+                let trampleTip = "Roll: " + trampleRoll;
+                let result = trampleRoll + shooter.armour - 1 + targetHex.cover;
+                trampleTip += "<br>Armour: +" + shooterArmour;
+                trampleTip += "<br>Moving: -1";
+                trampleTip += "<br>Cover: " + targetHex.cover;
+                let target = targetHex.infantry;
+                trampleTip = "Result: " + result + " vs. " + target +"+";
+                trampleTip = '[🎲](#" class="showtip" title="' + trampleTip + ')';
 
-
+                if (result >= target) {
+                    if (target.type.includes("Squad")) {
+                        outputCard.body.push(trampleTip + " " + target.name + " is Supressed and reduced to a Team");
+                        target.Half();
+                    } else {
+                        outputCard.body.push(trampleTip + " " + target.name + " Is Destroyed");
+                        target.Casualty();
+                    }
+                    outputCard.body.push(shooter.name + " must now continue its Move");
+                } else {
+                    outputCard.body.push("The Overrun fails, although the target unit is Suppressed");
+                    target.Suppress();
+                }
             } else {
                 let dice = weapon.dice;
                 let mod = 0;
