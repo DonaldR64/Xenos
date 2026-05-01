@@ -879,7 +879,7 @@ const Scenario = (() => {
             toFront(token);
             token.set("layer","foreground");
             let unit = new Unit(token.get("id"));
-            this.Casualty();
+            this.Casualty(false);
         }
 
 
@@ -1462,6 +1462,7 @@ const Scenario = (() => {
         let Tag = msg.content.split(";");
         let shooter = UnitArray[Tag[1]];
         let target = UnitArray[Tag[2]];
+        let shooterHex = HexMap[shooter.label];
         let targetHex = HexMap[target.label];
         let weapon = shooter.weapons[Tag[3]];
         let errorMsg = [];
@@ -1617,6 +1618,10 @@ const Scenario = (() => {
         }
 
         if (smoke === true) {
+            target.token.set({
+                left: targetHex.centre.x,
+                top: targetHex.centre.y
+            })
             outputCard.subtitle = "Smoke";
             target.Smoke("-OrZClZHMVrN3_8ZuHzx"); 
         } else {
@@ -2084,7 +2089,7 @@ log(hex)
                 //smoke or white phosphorus
                 _.each(interHex.tokenIDs,tokenID => {
                     let u2 = UnitArray[tokenID];
-                    if (u2.name.includes("Smoke") || u2.name.includes("Phosphorus")) {
+                    if ((u2.name.includes("Smoke") || u2.name.includes("Phosphorus")) && u2.name.includes("Ammo") === false) {
                         los[side] = false;
                         losReason[side] = "Smoke";
                     }
