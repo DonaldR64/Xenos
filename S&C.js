@@ -1430,7 +1430,7 @@ const Scenario = (() => {
             errorMsg.push("Unit already Fired");
         }
         if (shooter.token.get(SM.shaken) === true) {
-            errorMsg.push("Unit is unable to fire, the Crew is Shaken this turn");
+            errorMsg.push("Unit is unable to attack, the Crew is Shaken this turn");
         }
         if (shooter.sniper === true && target.type === "Vehicle") {
             errorMsg.push("Cannot target Vehicles");
@@ -1439,7 +1439,7 @@ const Scenario = (() => {
             errorMsg.push("Cannot target Infantry");
         }
         if (shooter.token.get(SM.moved) === true && (shooter.deployed === true || shooter.deployed2 === true)) {
-            errorMsg.push("Unit moved and cannot shoot this turn");
+            errorMsg.push("Unit just Deployed and cannot attack this turn");
         }
 ///deployed 2 - both move and prior turn move ? how to track
         let indirect = false;
@@ -1549,155 +1549,160 @@ const Scenario = (() => {
             let target = targets[t];
             if (t>0) {outputCard.body.push([hr])};
             outputCard.body.push("[U]" + target.name + "[/u]");
-            let dice = weapon.dice;
-            let mod = 0;
-            let cover = targetHex.cover;
-            let shootTip = "";
-            if (indirect === true) {
-                cover = 0;
-                shootTip += "<br>Indirect Fire, No Terrain Cover";
-            }
-            if (targetNote === "Overrun") {
-                cover = 0;
-                shootTip += "<br>Overrunning Unit gets no Terrain Cover";
-            }
-            if (targetNote === "Assaulter") {
-                cover = 0;
-                shootTip += "<br>Assaulting Unit gets no Terrain Cover";
-            }
-            if (targetNote === "Defender") {
-                cover = 0;
-                shootTip += "<br>Defending Unit gets no Terrain Cover";
-            }
-
-            if (shooterNote === "Assaulter" && shooter.faction === "US Airborne") {
-                dice++;
-                shootTip += "<br>+1 Dice for Airborne Assault";
-            }
-            shootTip += (cover === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
-            mod += cover;
-
-            if (target.token.get(SM.moved) === true && targetNote !== "Overrun" && targetNote !== "Assaulter") {
-                shootTip += "<br>Target Moved -1";
-                mod--;
-            }
-            if (shooter.token.get(SM.moved) === true && shooterNote !== "Assaulter" && shooterNote !== "Overrun") {
-                shootTip += "<br>Shooter Moved -1";
-                mod--;
-            }
-            if (shooterNote === "Assaulter") {
-                shootTip += "<br>Shooter Assaulting -1";
-                mod--;
-            }
             if (shooterNote === "Overrun") {
-                shootTip += "<br>Shooter Overrunning -1";
-                mod--;
-            }
-
-            if (shooter.token.get(SM.supp) !== false) {
-                let supp = parseInt(shooter.token.get(SM.supp));
-                shootTip += "<br>Shooter Suppressed -" + supp;
-                mod-=supp;
-            }
-            if (target.cover1 === true && indirect === false) {
-                shootTip += "<br>Target hard to hit, -1 Cover";
-                mod--;
-            }
-            if (weapon.notes.toLowerCase().includes("+1 to hit")) {
-                shootTip += "<br>Shooter has +1 to Hit";
-                mod++;
-            }
-            if (weapon.notes.toLowerCase().includes("-1 to hit")) {
-                shootTip += "<br>Shooter has -1 to Hit";
-                mod--;
-            }
+                
 
 
-
-
-            let rolls = [];
-            let hits = 0;
-            for (let i=0;i<dice;i++) {
-                let roll = randomInteger(6);
-                roll += mod;
-                rolls.push(roll);
-                if (roll > losResult.distance) {
-                    hits++;
-                }
-            }
-            rolls.sort();
-            rolls.reverse();
-            shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+" + shootTip;
-
-            if (hits === 0) {
-                shootTip = '[Missed](#" class="showtip" title="' + shootTip + ')';
             } else {
-                shootTip = '[Hit](#" class="showtip" title="' + shootTip + ')';
-            }
-            outputCard.body.push(shootTip + " with " + weapon.name);
-
-            if (hits > 0) {
-                let ap = parseInt(weapon.attack[losResult.distance]);
-                let attackTip = "Weapon AP: " + ap + "<br>vs."
-                let armour = DeepCopy(target.armour);
-                if (shooterNote === "Assault" && target.openTopped === true) {
-                    armour = 0;
+                let dice = weapon.dice;
+                let mod = 0;
+                let cover = targetHex.cover;
+                let shootTip = "";
+                if (indirect === true) {
+                    cover = 0;
+                    shootTip += "<br>Indirect Fire, No Terrain Cover";
                 }
-                attackTip += "<br>Target's Armour: " + armour;
-
-                if (target.type.includes("Infantry") && targetNote !== "Defender") {
-                    armour += targetHex.infantry;
-                    attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+                if (targetNote === "Overrun") {
+                    cover = 0;
+                    shootTip += "<br>Overrunning Unit gets no Terrain Cover";
                 }
-                if (target.note === "Overrun") {
-                    armour--;
-                    attackTip += "<br>Overrunning Unit has -1 Armour";
+                if (targetNote === "Assaulter") {
+                    cover = 0;
+                    shootTip += "<br>Assaulting Unit gets no Terrain Cover";
                 }
-                if (target.note === "Assaulter") {
-                    armour--;
-                    attackTip += "<br>Assaulting Unit has -1 Armour";
+                if (targetNote === "Defender") {
+                    cover = 0;
+                    shootTip += "<br>Defending Unit gets no Terrain Cover";
                 }
 
-                armour = Math.max(0,armour);
+                if (shooterNote === "Assaulter" && shooter.faction === "US Airborne") {
+                    dice++;
+                    shootTip += "<br>+1 Dice for Airborne Assault";
+                }
+                shootTip += (cover === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
+                mod += cover;
 
-                attackTip = '[🎲](#" class="showtip" title="' + attackTip + ')';
-                if (ap >= armour) {
-                    if (target.type.includes("Infantry") || target.type === "Gun") {
-                        if (shooter.sniper === true) {
-                            if (target.type.includes("Support")) {
-                                outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
-                                target.Casualty();
+                if (target.token.get(SM.moved) === true && targetNote !== "Overrun" && targetNote !== "Assaulter") {
+                    shootTip += "<br>Target Moved -1";
+                    mod--;
+                }
+                if (shooter.token.get(SM.moved) === true && shooterNote !== "Assaulter" && shooterNote !== "Overrun") {
+                    shootTip += "<br>Shooter Moved -1";
+                    mod--;
+                }
+                if (shooterNote === "Assaulter") {
+                    shootTip += "<br>Shooter Assaulting -1";
+                    mod--;
+                }
+                if (shooterNote === "Overrun") {
+                    shootTip += "<br>Shooter Overrunning -1";
+                    mod--;
+                }
+
+                if (shooter.token.get(SM.supp) !== false) {
+                    let supp = parseInt(shooter.token.get(SM.supp));
+                    shootTip += "<br>Shooter Suppressed -" + supp;
+                    mod-=supp;
+                }
+                if (target.cover1 === true && indirect === false) {
+                    shootTip += "<br>Target hard to hit, -1 Cover";
+                    mod--;
+                }
+                if (weapon.notes.toLowerCase().includes("+1 to hit")) {
+                    shootTip += "<br>Shooter has +1 to Hit";
+                    mod++;
+                }
+                if (weapon.notes.toLowerCase().includes("-1 to hit")) {
+                    shootTip += "<br>Shooter has -1 to Hit";
+                    mod--;
+                }
+
+
+
+
+                let rolls = [];
+                let hits = 0;
+                for (let i=0;i<dice;i++) {
+                    let roll = randomInteger(6);
+                    roll += mod;
+                    rolls.push(roll);
+                    if (roll > losResult.distance) {
+                        hits++;
+                    }
+                }
+                rolls.sort();
+                rolls.reverse();
+                shootTip = "Results: " + rolls.toString() + " vs. " + (losResult.distance + 1) + "+" + shootTip;
+
+                if (hits === 0) {
+                    shootTip = '[Missed](#" class="showtip" title="' + shootTip + ')';
+                } else {
+                    shootTip = '[Hit](#" class="showtip" title="' + shootTip + ')';
+                }
+                outputCard.body.push(shootTip + " with " + weapon.name);
+
+                if (hits > 0) {
+                    let ap = parseInt(weapon.attack[losResult.distance]);
+                    let attackTip = "Weapon AP: " + ap + "<br>vs."
+                    let armour = DeepCopy(target.armour);
+                    if (shooterNote === "Assault" && target.openTopped === true) {
+                        armour = 0;
+                    }
+                    attackTip += "<br>Target's Armour: " + armour;
+
+                    if (target.type.includes("Infantry") && targetNote !== "Defender") {
+                        armour += targetHex.infantry;
+                        attackTip += "<br>Terrain Armour: " + targetHex.infantry;
+                    }
+                    if (target.note === "Overrun") {
+                        armour--;
+                        attackTip += "<br>Overrunning Unit has -1 Armour";
+                    }
+                    if (target.note === "Assaulter") {
+                        armour--;
+                        attackTip += "<br>Assaulting Unit has -1 Armour";
+                    }
+
+                    armour = Math.max(0,armour);
+
+                    attackTip = '[🎲](#" class="showtip" title="' + attackTip + ')';
+                    if (ap >= armour) {
+                        if (target.type.includes("Infantry") || target.type === "Gun") {
+                            if (shooter.sniper === true) {
+                                if (target.type.includes("Support")) {
+                                    outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
+                                    target.Casualty();
+                                } else {
+                                    outputCard.body.push(attackTip + " " + target.name + " is Suppressed by Sniper Fire");
+                                    target.Suppress();
+                                }
                             } else {
-                                outputCard.body.push(attackTip + " " + target.name + " is Suppressed by Sniper Fire");
-                                target.Suppress();
+                                if (target.type.includes("Squad")) {
+                                    outputCard.body.push(attackTip + " " + target.name + " is Supressed and reduced to a Team");
+                                    target.Half();
+                                } else {
+                                    outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
+                                    target.Casualty();
+                                }
                             }
                         } else {
-                            if (target.type.includes("Squad")) {
-                                outputCard.body.push(attackTip + " " + target.name + " is Supressed and reduced to a Team");
-                                target.Half();
-                            } else {
-                                outputCard.body.push(attackTip + " " + target.name + " Is Destroyed");
-                                target.Casualty();
-                            }
+                            outputCard.body.push(attackTip + " " + target.name + " takes Damage");
+                            target.Damage(ap);
                         }
                     } else {
-                        outputCard.body.push(attackTip + " " + target.name + " takes Damage");
-                        target.Damage(ap);
-                    }
-                } else {
-                    outputCard.body.push(attackTip + " Target survives the fire");
-                    if (target.armour > 0 && ap > 1) {
-                        outputCard.body.push("Target is Flanked for rest of the Turn");
-                        target.Flanked();
-                    }
-                    if (target.type.includes("Infantry") || target.type === "Gun") {
-                        outputCard.body.push("Target gains a level of Suppression");
-                        target.Suppress();
+                        outputCard.body.push(attackTip + " Target survives the fire");
+                        if (target.armour > 0 && ap > 1) {
+                            outputCard.body.push("Target is Flanked for rest of the Turn");
+                            target.Flanked();
+                        }
+                        if (target.type.includes("Infantry") || target.type === "Gun") {
+                            outputCard.body.push("Target gains a level of Suppression");
+                            target.Suppress();
+                        }
                     }
                 }
             }
         }
-        
         shooter.token.set(SM.fired,true);
         PrintCard();
 
