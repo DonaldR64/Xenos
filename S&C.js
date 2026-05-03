@@ -1526,6 +1526,7 @@ const Main = (() => {
 ///deployed 2 - both move and prior turn move ? how to track
         let indirect = false;
         let losResult = LOS(shooter,target);
+        if (losResult.los === false) {visual = false};
 
         if ((losResult.distance > 4 || (losResult.distance > 3 && weapon.attack[4] === "-")) && weapon.notes.includes("Indirect")) {
             //allows indirect fire by unit at longer range
@@ -1859,6 +1860,16 @@ const Main = (() => {
         if (whitePhos === true) {
             outputCard.body.push("Any surviving units must exit the Hex");
         }
+        log(shooter.token)
+        if (shooter.token.get("currentSide") === 1 && losResult.los === true) {
+            let sides = shooter.token.get("sides").split("|");                
+            shooter.token.set({
+                currentSide: 0,
+                imgsrc: tokenImage(sides[0]),
+            });
+        }
+
+
         shooter.token.set(SM.fired,true);
         PrintCard();
 
