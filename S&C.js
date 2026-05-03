@@ -929,7 +929,46 @@ const Main = (() => {
     }
 
 
-
+    const CheckVisibility = (unit) => {
+        //when move, if hidden
+        let u1Sighted = unit.token.get("currentSide") === 0 ? true:false; 
+        let flag = false;
+        let uIDs = Object.keys(UnitArray);
+        for (let i=0;i<uIDs.length;i++) {
+            let id = uIDs[i];
+            if (id === unit.id) {continue};
+            let unit2 = UnitArray[id];
+            if (unit2.faction === unit.faction) {continue};
+            let u2Sighted = unit2.token.get("currentSide") === 0 ? true:false;
+            if (u1Sighted === true && u2Sighted === true) {
+                continue;
+            }
+            let losResult = LOS(unit2,unit);
+            if (losResult.los === false) {
+                flag = true;
+                continue;
+            };
+            if (u2Sighted === false) {
+                let sides = unit2.token.get("sides").split("|");
+                unit2.token.set({
+                    currentSide: 0,
+                    imgsrc: tokenImage(sides[0]),
+                });
+            }
+            if (u1Sighted === false) {
+                let sides = unit.token.get("sides").split("|");                
+                unit.token.set({
+                    currentSide: 0,
+                    imgsrc: tokenImage(sides[0]),
+                });
+                u1Sighted = true;
+            }
+        }
+        if (flag === false) {
+            state.SC.hidden = false;
+            //no more hidden units
+        }
+    }
 
 
     const AddAbility = (abilityName,action,characterID) => {
@@ -1318,9 +1357,10 @@ const Main = (() => {
 
 
     const SetupGame = (msg) => {
-        //!Setup;?{Game Points|0}
+        //!Setup;?{Hidden Units|Yes|No}
         let Tag = msg.content.split(";");
-        state.SC.gamePoints = Tag[1];
+        state.SC.hidden = Tag[1] === "Yes" ? true:false;
+
 
     }
 
@@ -1888,6 +1928,28 @@ log(hex)
         PrintCard();
     }
 
+    const AddHiddenSide = (msg) => {
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        let token = unit.token;
+        let side2;
+        if (unit.faction === "Wermacht") {
+            side2 = "https://files.d20.io/images/485724322/sxYKpRjfXnz2Jvy4_A9O3Q/thumb.png?1777837809";
+        }
+        if (unit.faction === "US Army") {
+            side2 = "https://files.d20.io/images/485724905/l08my_W6sSXr0q7YHUbx5A/thumb.png?1777838018";
+        }
+        let side1 = token.get("imgsrc");
+        let sides = side1 + "|" + side2;
+log(sides)
+        token.set({
+            sides: sides,
+            currentSide: 0,
+        })
+    }
+
 
 
     const DrawLine = (hex1,hex2) => {
@@ -1971,15 +2033,14 @@ log(hex)
         UnitArray = {};
 
     
-        RemoveDead("All");
+        //RemoveDead("All");
 
         state.SC = {
             playerIDs: ["",""],
             players: {},
             factions: ["",""],
             turn: 0,
-
-
+            hidden: false,
         }
         BuildMap();
         sendChat("","Cleared State/Arrays");
@@ -2186,7 +2247,11 @@ log(hex)
                 } else {
                     unit.token.set(SM.zeroed,false);
                     PlaySound(unit.mode);
+                    if (state.SC.hidden === true) {
+                        CheckVisibility(unit);
+                    }
                 }
+
             }
         } else {
             let character = getObj("character", tok.get("represents"));   
@@ -2269,7 +2334,9 @@ log(hex)
             case '!AssignTeams':
                 AssignTeams(msg);
                 break;
-
+            case '!AddHidden':
+                AddHiddenSide(msg);
+                break;
         }
     };
 
