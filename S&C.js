@@ -1,4 +1,4 @@
-const Scenario = (() => {
+const Main = (() => {
     const version = '2026.4.29';
     if (!state.SC) {state.SC = {}};
 
@@ -673,7 +673,7 @@ const Scenario = (() => {
             _.each(notes,note => {
                 this[note] = (aa[note] === "1") ? true:false;
             })
-            this.mode = aa.mode;
+            this.mode = aa.mode || "Foot";
             this.zeroLabel = "";
 
             let weapons = [];
@@ -2185,6 +2185,7 @@ log(hex)
                     })
                 } else {
                     unit.token.set(SM.zeroed,false);
+                    PlaySound(unit.mode);
                 }
             }
         } else {
