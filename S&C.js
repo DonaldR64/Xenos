@@ -1958,6 +1958,8 @@ log(sides)
         token.set({
             sides: sides,
             currentSide: 0,
+            disableSnapping: true,
+            disableTokenMenu: true,
         })
     }
 
