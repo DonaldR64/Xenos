@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.4.29';
+    const version = '2026.5.3';
     if (!state.SC) {state.SC = {}};
 
     const pageInfo = {};
