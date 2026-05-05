@@ -667,7 +667,14 @@ const Main = (() => {
             }
             this.player = (this.faction === "Neutral") ? 2:(state.SC.factions[0] === this.faction)? 0:1;
             this.type = aa.type;
-            this.experience = aa.experience || "Experienced";
+            let experience = "Experienced";
+            if (token.get(SM.green) === true) {
+                experience = "Green";
+            }
+            if (token.get(SM.veteran) === true) {
+                experience = "Veteran";
+            }
+            this.experience = experience;
             this.armour = parseInt(aa.armour);
             this.move = parseInt(aa.move);
             let notes = ["radio","deployed","deployed2","indirect","transport","openTopped","airborne","hq","line","sniper","at","skirts","cover1"];
