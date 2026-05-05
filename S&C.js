@@ -1360,7 +1360,7 @@ const Main = (() => {
         //!Setup;?{Hidden Units|Yes|No}
         let Tag = msg.content.split(";");
         state.SC.hidden = Tag[1] === "Yes" ? true:false;
-
+        state.SC.players = []
 
     }
 
