@@ -1594,10 +1594,8 @@ const Main = (() => {
             }
         }
 
-
         let smokeInHex = false; //preexisting smoke
         let combo = false; //check for tank/infantry combo
-
 
         _.each(targetHex.tokenIDs,tokenID => {
             let u2 = UnitArray[tokenID];
@@ -1609,46 +1607,42 @@ const Main = (() => {
             }
         })
 
-
-
-
-
-
+        //check for scatter
         let zeroed = false;
         if (target.token.get(SM.zeroed) === true && shooter.zeroLabel === target.label) {
             zeroed = true;
         }
-        let targets = [];
-        if (indirect === true) {
-            if(zeroed === false) {
-                //check for scatter
-                let roll1 = randomInteger(6);
-                let roll2 = randomInteger(6);
-                let scatter = roll1 + roll2;
-                outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
-                if (scatter > 4 && scatter < 10) {
-                    outputCard.body.push("Fire Zeroed in on Target(s)");
-                    zeroed = true;
-                    shooter.zeroLabel = target.label;
-                } else {
-                    let dir = DIRECTIONS[randomInteger(6)];
-                    let newLabel = targetHex.cube.neighbour(dir).label();
-                    targetHex = HexMap[newLabel];
-                    if (targetHex && targetHex.name !== "Offboard") {
-                        outputCard.body.push("Fire Scatters to the " + dir);
-                        outputCard.body.push("Landing in Hex " + newLabel);
-                    } else {
-                        outputCard.body.push("Fire Scatters Offboard");
-                    }
-                } 
+        if(zeroed === false) {
+            let roll1 = randomInteger(6);
+            let roll2 = randomInteger(6);
+            let scatter = roll1 + roll2;
+            outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
+            if (scatter > 4 && scatter < 10) {
+                outputCard.body.push("Fire Zeroed in on Target(s)");
+                zeroed = true;
+                shooter.zeroLabel = target.label;
             } else {
-                outputCard.body.push("Fire is Already Zeroed In");
-            }
+                let dir = DIRECTIONS[randomInteger(6)];
+                let newLabel = targetHex.cube.neighbour(dir).label();
+                targetHex = HexMap[newLabel];
+                if (targetHex && targetHex.name !== "Offboard") {
+                    outputCard.body.push("Fire Scatters to the " + dir);
+                    outputCard.body.push("Landing in Hex " + newLabel);
+                } else {
+                    outputCard.body.push("Fire Scatters Offboard");
+                }
+            } 
+        } else {
+            outputCard.body.push("Fire is Already Zeroed In");
+        }
 
-            outputCard.body.push("[hr]")
-            //attacks all units in hex
-            if (targetHex) {
-                 _.each(targetHex.tokenIDs,tokenID => {
+        outputCard.body.push("[hr]")
+
+        //targets in hex
+        let targets = [];
+        if (targetHex) {
+            if (indirect === true || shooterNote === "Overrun") {
+                _.each(targetHex.tokenIDs,tokenID => {
                     let t2 = UnitArray[tokenID];
                     if (t2) {
                         targets.push(t2);
@@ -1657,9 +1651,9 @@ const Main = (() => {
                         }
                     }
                 })
+            } else {
+                targets = [target];
             }
-        } else {
-            targets = [target];
         }
 
         if (targets.length === 0) {
@@ -1667,7 +1661,7 @@ const Main = (() => {
             //will skip next bit as length 0
         }
 
-        if (smoke === true) {
+        if (smoke === true && targetHex) {
             target.token.set({
                 left: targetHex.centre.x,
                 top: targetHex.centre.y
@@ -1878,7 +1872,7 @@ const Main = (() => {
             }
         }
 
-        if (whitePhos === true) {
+        if (whitePhos === true && targetHex) {
             outputCard.body.push("Any surviving units must exit the Hex");
         }
         log(shooter.token)
