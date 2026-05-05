@@ -2023,6 +2023,7 @@ log(sides)
         PlaySound("Dice");
         let roll = randomInteger(6);
         let playerID = msg.playerid;
+log(playerID);
         let id,model,player;
         if (msg.selected) {
             id = msg.selected[0]._id;
