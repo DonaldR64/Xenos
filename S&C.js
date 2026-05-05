@@ -2256,7 +2256,19 @@ log(playerID);
         return result;
     }
 
-
+    const SetMarker = (msg) => {
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        let token = unit.token;
+        let marker = msg.content.split(";")[1];
+        marker = SM[marker];
+        if (marker) {
+            let onoff = token.get(marker) === true ? false:true;
+            token.set(marker,onoff)
+        }        
+    }
 
 
     const ErrorMsg = (msgs) => {
@@ -2404,6 +2416,10 @@ log(playerID);
             case '!AddHidden':
                 AddHiddenSide(msg);
                 break;
+            case '!SetMarker':
+                SetMarker(msg);
+                break;
+
         }
     };
 
