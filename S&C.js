@@ -1594,13 +1594,22 @@ const Main = (() => {
             }
         }
 
+
         let smokeInHex = false; //preexisting smoke
+        let combo = false; //check for tank/infantry combo
+
+
         _.each(targetHex.tokenIDs,tokenID => {
             let u2 = UnitArray[tokenID];
             if (u2.name.includes("Smoke")) {
                 smokeInHex = true;
             }
+            if (target.type.includes("Infantry") && u2.type === "Vehicle" && u2.armour > 1) {
+                combo = true;
+            }
         })
+
+
 
 
 
@@ -1697,25 +1706,26 @@ const Main = (() => {
                     let dice = weapon.dice;
                     let mod = 0;
                     let cover = targetHex.cover;
+                    let noCover = false;
                     let shootTip = "";
                     if (indirect === true) {
-                        cover = 0;
+                        noCover = true;
                         shootTip += "<br>Indirect Fire, No Terrain Cover";
                     }
                     if (weapon.notes.includes("Ignores Terrain")) {
-                        cover = 0;
+                        noCover = true;
                         shootTip += "<br>" + weapon.name + " Ignores Cover";
                     }
                     if (targetNote === "Overrun") {
-                        cover = 0;
+                        noCover = true;
                         shootTip += "<br>Overrunning Unit gets no Terrain Cover";
                     }
                     if (targetNote === "Assaulter") {
-                        cover = 0;
+                        noCover = true;
                         shootTip += "<br>Assaulting Unit gets no Terrain Cover";
                     }
                     if (targetNote === "Defender") {
-                        cover = 0;
+                        noCover = true;
                         shootTip += "<br>Defending Unit gets no Terrain Cover";
                     }
                     if (smokeInHex === true) {
@@ -1723,12 +1733,19 @@ const Main = (() => {
                         shootTip += "<br>Smoke in Hex -2 Cover";
                     }
 
+                    shootTip += (noCover === true) ? "<br>No Terrain Cover":"<br>Terrain Cover " + cover;
+
+                    if (cover === 0 && noCover === false && combo === true) {
+                        cover = -1;
+                        shootTip += "<br>Armour Cover -1";
+                    }
+                    mod += cover;
+                
                     if (shooterNote === "Assaulter" && shooter.faction === "US Airborne") {
                         dice++;
                         shootTip += "<br>+1 Dice for Airborne Assault";
                     }
-                    shootTip += (cover === 0) ? "<br>No Terrain Cover":"<br>Terrain Cover " + mod;
-                    mod += cover;
+
 
                     if (target.token.get(SM.moved) === true && targetNote !== "Overrun" && targetNote !== "Assaulter") {
                         shootTip += "<br>Target Moved -1";
@@ -1805,7 +1822,11 @@ const Main = (() => {
                                 armour += targetHex.infantry;
                                 attackTip += "<br>Terrain Armour: " + targetHex.infantry;
                             }
+                            if (combo === true && armour < 2) {
+                                attackTip += "<br>Friendly Armour: +2";
+                            }
                         }
+
                         if (target.note === "Overrun") {
                             armour--;
                             attackTip += "<br>Overrunning Unit has -1 Armour";
@@ -2264,7 +2285,6 @@ log(sides)
                         CheckVisibility(unit);
                     }
                 }
-
             }
         } else {
             let character = getObj("character", tok.get("represents"));   
