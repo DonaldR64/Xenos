@@ -1525,6 +1525,7 @@ const Main = (() => {
 
 
     const Shoot = (msg) => {    
+        RemoveDead();
         let Tag = msg.content.split(";");
         let shooter = UnitArray[Tag[1]];
         let target = UnitArray[Tag[2]];
@@ -2090,7 +2091,7 @@ log(playerID);
         UnitArray = {};
 
     
-        //RemoveDead("All");
+        RemoveDead("All");
 
         state.SC = {
             players: {},
@@ -2113,6 +2114,14 @@ log(playerID);
         }
     }
 
+    const RemoveDead = () => {
+        let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
+        _.each(tokens,token => {
+            if (token.get("status_dead") === true) {
+                token.remove();
+            }
+        })
+    }
 
 
 
