@@ -1547,10 +1547,14 @@ const Main = (() => {
             }
         }
         
+        let attackCombo = false;
         _.each(shooterHex.tokenIDs,tokenID => {
             let u2 = UnitArray[tokenID];
             if (u2.name.includes("Smoke")) {
                 errorMsg.push("Cannot Fire due to Smoke");
+            }
+            if (shooter.type.includes("Infantry") && u2.type === "Vehicle" && u2.armour > 1) {
+                attackCombo = true;
             }
         })
 
@@ -1595,7 +1599,7 @@ const Main = (() => {
         }
 
         let smokeInHex = false; //preexisting smoke
-        let combo = false; //check for tank/infantry combo
+        let defenceCombo = false; //check for tank/infantry 
 
         _.each(targetHex.tokenIDs,tokenID => {
             let u2 = UnitArray[tokenID];
@@ -1603,7 +1607,7 @@ const Main = (() => {
                 smokeInHex = true;
             }
             if (target.type.includes("Infantry") && u2.type === "Vehicle" && u2.armour > 1) {
-                combo = true;
+                defenceCombo = true;
             }
         })
 
@@ -1729,7 +1733,7 @@ const Main = (() => {
 
                     shootTip += (noCover === true) ? "<br>No Terrain Cover":"<br>Terrain Cover " + cover;
 
-                    if (cover === 0 && noCover === false && combo === true) {
+                    if (cover === 0 && noCover === false && defenceCombo === true) {
                         cover = -1;
                         shootTip += "<br>Armour Cover -1";
                     }
@@ -1757,6 +1761,10 @@ const Main = (() => {
                         shootTip += "<br>Shooter Overrunning -1";
                         mod--;
                     }
+                    if (attackCombo === true) {
+                        shootTip += "<br>Infantry/Armour Combo -1";
+                        mod--;
+                    }
 
                     if (shooter.token.get(SM.supp) !== false) {
                         let supp = parseInt(shooter.token.get(SM.supp));
@@ -1775,8 +1783,6 @@ const Main = (() => {
                         shootTip += "<br>Shooter has -1 to Hit";
                         mod--;
                     }
-
-
 
 
                     let rolls = [];
@@ -1816,7 +1822,7 @@ const Main = (() => {
                                 armour += targetHex.infantry;
                                 attackTip += "<br>Terrain Armour: " + targetHex.infantry;
                             }
-                            if (combo === true && armour < 2) {
+                            if (defenceCombo === true && armour < 2) {
                                 attackTip += "<br>Friendly Armour: +2";
                             }
                         }
