@@ -103,6 +103,7 @@ const Main = (() => {
             "fontColour": "#000000",
             "borderColour": "#00FF00",
             "borderStyle": "5px ridge",
+            dice: "Neutral",
 
         },
 
@@ -1357,10 +1358,13 @@ const Main = (() => {
 
 
     const SetupGame = (msg) => {
-        //!Setup;?{Hidden Units|Yes|No}
+        //!Setup;?{Hidden Units|Yes|No};?{Don is|Wermacht|US Army}
         let Tag = msg.content.split(";");
         state.SC.hidden = Tag[1] === "Yes" ? true:false;
-        state.SC.players = []
+        state.SC.players["-OrEQprPPo3w2WOluH58"] = Tag[2];
+
+
+
 
     }
 
@@ -2071,7 +2075,6 @@ log(playerID);
         //RemoveDead("All");
 
         state.SC = {
-            playerIDs: ["",""],
             players: {},
             factions: ["",""],
             turn: 0,
