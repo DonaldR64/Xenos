@@ -1643,29 +1643,32 @@ const Main = (() => {
         if (target.token.get(SM.zeroed) === true && shooter.zeroLabel === target.label) {
             zeroed = true;
         }
-        if(zeroed === false) {
-            let roll1 = randomInteger(6);
-            let roll2 = randomInteger(6);
-            let scatter = roll1 + roll2;
-            outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
-            if (scatter > 4 && scatter < 10) {
-                outputCard.body.push("Fire Zeroed in on Target(s)");
-                zeroed = true;
-                shooter.zeroLabel = target.label;
-            } else {
-                let dir = DIRECTIONS[randomInteger(6)];
-                let newLabel = targetHex.cube.neighbour(dir).label();
-                targetHex = HexMap[newLabel];
-                if (targetHex && targetHex.name !== "Offboard") {
-                    outputCard.body.push("Fire Scatters to the " + dir);
-                    outputCard.body.push("Landing in Hex " + newLabel);
+        if (indirect === true) {
+            if(zeroed === false) {
+                let roll1 = randomInteger(6);
+                let roll2 = randomInteger(6);
+                let scatter = roll1 + roll2;
+                outputCard.body.push("Scatter Rolls: " + DisplayDice(roll1,shooter.faction,26) + " " + DisplayDice(roll2,shooter.faction,26));
+                if (scatter > 4 && scatter < 10) {
+                    outputCard.body.push("Fire Zeroed in on Target(s)");
+                    zeroed = true;
+                    shooter.zeroLabel = target.label;
                 } else {
-                    outputCard.body.push("Fire Scatters Offboard");
-                }
-            } 
-        } else {
-            outputCard.body.push("Fire is Already Zeroed In");
+                    let dir = DIRECTIONS[randomInteger(6)];
+                    let newLabel = targetHex.cube.neighbour(dir).label();
+                    targetHex = HexMap[newLabel];
+                    if (targetHex && targetHex.name !== "Offboard") {
+                        outputCard.body.push("Fire Scatters to the " + dir);
+                        outputCard.body.push("Landing in Hex " + newLabel);
+                    } else {
+                        outputCard.body.push("Fire Scatters Offboard");
+                    }
+                } 
+            } else {
+                outputCard.body.push("Fire is Already Zeroed In");
+            }   
         }
+
 
         outputCard.body.push("[hr]")
 
