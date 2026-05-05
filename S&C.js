@@ -711,6 +711,14 @@ const Main = (() => {
                 this.team2ID = aa.team2ID || ""; //depending on unit, rifle team or MG team
             }
 
+            let keys = Object.keys(state.SC.players);
+            for (let i=0;i<2;i++) {
+                let playerID = keys[i];
+                let player = state.SC.players[i];
+                if (player === this.faction) {
+                    this.playerID = playerID;
+                }
+            }
 
 
             UnitArray[id] = this;
@@ -883,9 +891,23 @@ const Main = (() => {
             this.Casualty(false);
         }
 
+        Reveal() {
+            let sides = this.token.get("sides").split("|");
+            this.token.set({
+                currentSide: 0,
+                imgsrc: tokenImage(sides[0]),
+                controlledby: "all",
+            })
+        }
 
-
-
+        Hide() {
+            let sides = this.token.get("sides").split("|");
+            this.token.set({
+                currentSide: 1,
+                imgsrc: tokenImage(sides[1]),
+                controlledby: this.playerID,
+            })
+        }
 
 
 
@@ -950,18 +972,11 @@ const Main = (() => {
                 continue;
             };
             if (u2Sighted === false) {
-                let sides = unit2.token.get("sides").split("|");
-                unit2.token.set({
-                    currentSide: 0,
-                    imgsrc: tokenImage(sides[0]),
-                });
+                unit2.Reveal();
+                
             }
             if (u1Sighted === false) {
-                let sides = unit.token.get("sides").split("|");                
-                unit.token.set({
-                    currentSide: 0,
-                    imgsrc: tokenImage(sides[0]),
-                });
+                unit.Reveal();
                 u1Sighted = true;
             }
         }
@@ -1358,11 +1373,11 @@ const Main = (() => {
 
 
     const SetupGame = (msg) => {
-        //!Setup;?{Hidden Units|Yes|No};?{Don is|Wermacht|US Army}
+        //!Setup;?{Hidden Units|Yes|No};?{Don is|Wermacht|US Army};?{Ted is|Wermacht|US Army};
         let Tag = msg.content.split(";");
         state.SC.hidden = Tag[1] === "Yes" ? true:false;
         state.SC.players["-OrEQprPPo3w2WOluH58"] = Tag[2];
-
+        //state.SC.players[""] = Tag[3];
 
 
 
@@ -1887,11 +1902,7 @@ const Main = (() => {
         }
         log(shooter.token)
         if (shooter.token.get("currentSide") === 1 && losResult.los === true) {
-            let sides = shooter.token.get("sides").split("|");                
-            shooter.token.set({
-                currentSide: 0,
-                imgsrc: tokenImage(sides[0]),
-            });
+            shooter.Reveal();
         }
 
 
