@@ -2232,13 +2232,15 @@ log(playerID);
                 //does edge between hex and prior hex block LOS
                 let dir = lastHex.cube.whatDirection(interHex.cube);
                 let edge = lastHex.edges[dir];
-                if (edge === "Bocage") {
-                    if (ignoreEdge[side] === 0) {
-                        los[side] = false;
-                        losReason[side] = "Bocage";
-                        break;
-                    } else {
-                        ignoreEdge[side] = 0;
+                if (i > 0 || shooter.sniper === false || shooter.at === false) {
+                    if (edge === "Bocage") {
+                        if (ignoreEdge[side] === 0) {
+                            los[side] = false;
+                            losReason[side] = "Bocage";
+                            break;
+                        } else {
+                            ignoreEdge[side] = 0;
+                        }
                     }
                 }
             }
