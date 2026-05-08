@@ -819,9 +819,15 @@ const Main = (() => {
                 damageResult--;
                 damageTip += "<br>Armour Skirting -1";
             }
+            let damageText = damageResult;
+            if (damageResult > 4) {damageText = "5+"};
+            if (damageResult <1) {damageText = "<1"};
+
+
+
             damageResult = Math.max(Math.min(5,damageResult),1);
 
-            damageTip = "Net " + damageResult + damageTip;
+            damageTip = "Net " + damageText + damageTip;
             damageTip = '[🎲](#" class="showtip" title="' + damageTip + ')';
 
             switch(damageResult) {
@@ -1916,7 +1922,7 @@ const Main = (() => {
             shooter.Reveal();
         }
 
-
+        PlaySound(weapon.sound);
         shooter.token.set(SM.fired,true);
         PrintCard();
 
